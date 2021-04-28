@@ -27,7 +27,7 @@ func (p *Product) Barcode() string {
 }
 
 func (p *Product) Name() string {
-	return p.barcode
+	return p.name
 }
 
 func (p *Product) Description() string {

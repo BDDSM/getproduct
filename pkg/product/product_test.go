@@ -39,11 +39,11 @@ func TestProduct(t *testing.T) {
 		t.Error(fmt.Errorf("manufacturer doesn't equal %s", manufacturer))
 	}
 
-	if p.Description() != name {
+	if p.Description() != description {
 		t.Error(fmt.Errorf("description doesn't equal %s", description))
 	}
 
-	if p.Unit() != name {
+	if p.Unit() != unit {
 		t.Error(fmt.Errorf("unit doesn't equal %s", unit))
 	}
 
