@@ -1,6 +1,9 @@
 package product
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"strings"
+)
 
 type Product struct {
 	barcode      string
@@ -11,6 +14,9 @@ type Product struct {
 }
 
 func NewProduct(barcode, name, unit, description, manufacturer string) *Product {
+
+	unit = processUnit(unit)
+
 	p := Product{
 		barcode:      barcode,
 		name:         name,
@@ -71,4 +77,10 @@ func (p *Product) UnmarshalJSON(b []byte) error {
 
 	return nil
 
+}
+
+func processUnit(unit string) string {
+	unit = strings.ToLower(unit)
+	unit = strings.Trim(unit, ".")
+	return unit
 }
