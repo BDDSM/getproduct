@@ -1,10 +1,10 @@
 package barcodeList
 
 import (
+	"context"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/korableg/getproduct/pkg/product"
-	"github.com/korableg/getproduct/pkg/productProvider"
 	"net/http"
 	"strconv"
 	"strings"
@@ -14,9 +14,14 @@ const endpointTemplate = "https://barcode-list.ru/barcode/RU/Поиск.htm?barc
 
 type BarcodeList struct{}
 
-func (b *BarcodeList) GetProduct(barcode string) (*product.Product, error) {
+func (b *BarcodeList) GetProduct(ctx context.Context, barcode string) (*product.Product, error) {
 
-	response, err := http.Get(fmt.Sprintf(endpointTemplate, barcode))
+	request, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf(endpointTemplate, barcode), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := http.DefaultClient.Do(request)
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +37,7 @@ func (b *BarcodeList) GetProduct(barcode string) (*product.Product, error) {
 
 	name := getName(doc)
 	if name == "" {
-		return nil, productProvider.ErrProductDidntFind
+		return nil, fmt.Errorf("barcode-list.ru: product by barcode %s didn't find", barcode)
 	}
 	unit := getUnit(doc)
 

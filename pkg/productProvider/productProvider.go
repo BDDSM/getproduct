@@ -1,6 +1,7 @@
 package productProvider
 
 import (
+	"context"
 	"errors"
 	"github.com/korableg/getproduct/pkg/product"
 )
@@ -8,5 +9,5 @@ import (
 var ErrProductDidntFind error = errors.New("product didn't find")
 
 type ProductProvider interface {
-	GetProduct(cbarcode string) (*product.Product, error)
+	GetProduct(ctx context.Context, barcode string) (*product.Product, error)
 }

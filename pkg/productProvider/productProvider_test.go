@@ -1,6 +1,9 @@
 package productProvider
 
-import "testing"
+import (
+	"context"
+	"testing"
+)
 
 func TestProvider(t *testing.T) {
 
@@ -9,7 +12,7 @@ func TestProvider(t *testing.T) {
 
 	var pp ProductProvider = &mockProductProvider{}
 
-	prod, err := pp.GetProduct(barcode)
+	prod, err := pp.GetProduct(context.Background(), barcode)
 	if prod.Barcode() != barcode {
 		t.Errorf("barcode doesn't equal %s", barcode)
 	}
@@ -18,7 +21,7 @@ func TestProvider(t *testing.T) {
 		t.Error(err)
 	}
 
-	_, err = pp.GetProduct(barcodeError)
+	_, err = pp.GetProduct(context.Background(), barcodeError)
 	if err == nil {
 		t.Errorf("error with barcode %s doesn't equal nil", barcodeError)
 	}

@@ -17,3 +17,5 @@
 /.idea/getproduct.iml
 /.idea/.gitignore
 /.idea/modules.xml
+
+.env

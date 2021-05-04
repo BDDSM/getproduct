@@ -1,8 +1,8 @@
 package barcodeList
 
 import (
+	"context"
 	"fmt"
-	"github.com/korableg/getproduct/pkg/productProvider"
 	"testing"
 )
 
@@ -14,8 +14,10 @@ func TestBarcodeList(t *testing.T) {
 	const ksila_name = "КСИЛА Раствор для инъекций (50 мл) Interchemie"
 	const barcode_fake = "fake"
 
+	ctx := context.Background()
+
 	bl := &BarcodeList{}
-	pr, err := bl.GetProduct(barcode_karsulen)
+	pr, err := bl.GetProduct(ctx, barcode_karsulen)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -28,7 +30,7 @@ func TestBarcodeList(t *testing.T) {
 		t.Errorf("name should %s, have %s", karsulen_name, pr.Name())
 	}
 
-	pr, err = bl.GetProduct(barcode_ksila)
+	pr, err = bl.GetProduct(ctx, barcode_ksila)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,9 +43,10 @@ func TestBarcodeList(t *testing.T) {
 		t.Errorf("name should %s, have %s", ksila_name, pr.Name())
 	}
 
-	pr, err = bl.GetProduct(barcode_fake)
-	if err != productProvider.ErrProductDidntFind {
-		t.Fatal(fmt.Errorf("the error should be \"productProvider.ErrProductDidntFind\""))
+	errorTextShould := "barcode-list.ru: product by barcode fake didn't find"
+	pr, err = bl.GetProduct(ctx, barcode_fake)
+	if err.Error() != errorTextShould {
+		t.Fatal(fmt.Errorf("the error should be \"%s\"", errorTextShould))
 	}
 
 }
