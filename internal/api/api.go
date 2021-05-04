@@ -8,6 +8,7 @@ import (
 	"github.com/korableg/getproduct/internal/errs"
 	"github.com/korableg/getproduct/pkg/productProviders/barcodeList"
 	"github.com/korableg/getproduct/pkg/productRepository"
+	"log"
 	"net/http"
 )
 
@@ -64,7 +65,9 @@ func getProduct(c *gin.Context) {
 
 	p, err := repository.Get(c, barcode)
 	if err != nil {
+		log.Println(err)
 		c.JSON(http.StatusBadRequest, errs.New(err))
+		return
 	}
 
 	c.JSON(http.StatusOK, p)

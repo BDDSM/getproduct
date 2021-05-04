@@ -37,7 +37,7 @@ func (b *BarcodeList) GetProduct(ctx context.Context, barcode string) (*product.
 
 	name := getName(doc)
 	if name == "" {
-		return nil, fmt.Errorf("barcode-list.ru: product by barcode %s didn't find", barcode)
+		return nil, fmt.Errorf("barcode-list.ru: product by barcode %s not found", barcode)
 	}
 	unit := getUnit(doc)
 

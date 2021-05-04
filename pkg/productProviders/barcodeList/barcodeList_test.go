@@ -43,7 +43,7 @@ func TestBarcodeList(t *testing.T) {
 		t.Errorf("name should %s, have %s", ksila_name, pr.Name())
 	}
 
-	errorTextShould := "barcode-list.ru: product by barcode fake didn't find"
+	errorTextShould := "barcode-list.ru: product by barcode fake not found"
 	pr, err = bl.GetProduct(ctx, barcode_fake)
 	if err.Error() != errorTextShould {
 		t.Fatal(fmt.Errorf("the error should be \"%s\"", errorTextShould))

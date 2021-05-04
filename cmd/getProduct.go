@@ -17,6 +17,8 @@ func main() {
 	quit := make(chan os.Signal)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
 
+	log.Println("GetProduct was started")
+
 	<-quit
 
 	log.Println("Shutdown GetProduct...")

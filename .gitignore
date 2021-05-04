@@ -18,4 +18,5 @@
 /.idea/.gitignore
 /.idea/modules.xml
 
-.env
+/.env
+/logs.txt

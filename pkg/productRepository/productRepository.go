@@ -34,20 +34,25 @@ func (pr *ProductRepository) Get(ctx context.Context, barcode string) (*product.
 	pr.muProviders.RLock()
 	defer pr.muProviders.RUnlock()
 
-	log.Println(fmt.Sprintf("getting product by barcode: %s", barcode))
-
 	if len(pr.providers) == 0 {
 		return nil, errors.New("product providers is empty")
 	}
 
+	log.Println(fmt.Sprintf("getting product by barcode: %s", barcode))
+
 	newCtx, cancelFunc := context.WithTimeout(ctx, time.Second*10)
 	defer cancelFunc()
 
+	wg := sync.WaitGroup{}
+	wg.Add(len(pr.providers))
+
 	productChan := make(chan *product.Product)
+	wgDone := make(chan struct{})
 
 	for _, provider := range pr.providers {
 		go func() {
 			p, err := provider.GetProduct(newCtx, barcode)
+			wg.Done()
 			if err != nil {
 				log.Println(err)
 				return
@@ -56,9 +61,16 @@ func (pr *ProductRepository) Get(ctx context.Context, barcode string) (*product.
 		}()
 	}
 
+	go func() {
+		wg.Wait()
+		wgDone <- struct{}{}
+	}()
+
 	select {
 	case dst := <-productChan:
 		return dst, nil
+	case <-wgDone:
+		return nil, fmt.Errorf("product by barcode %s not found", barcode)
 	case <-newCtx.Done():
 		return nil, newCtx.Err()
 	}
