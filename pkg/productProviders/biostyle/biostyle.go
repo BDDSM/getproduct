@@ -8,7 +8,7 @@ import (
 	"github.com/korableg/getproduct/pkg/httpUtils"
 	"github.com/korableg/getproduct/pkg/product"
 	"log"
-	"net/url"
+	url2 "net/url"
 	"strconv"
 	"strings"
 )
@@ -130,7 +130,7 @@ func (b *BioStyle) getAdditionalProperty(doc *goquery.Document, key string) (val
 
 func (b *BioStyle) getUrlByGoogle(ctx context.Context, barcode string) (string, error) {
 
-	params := url.Values{}
+	params := url2.Values{}
 	params.Add("q", fmt.Sprintf("%s site:biostyle.biz", barcode))
 
 	builder := strings.Builder{}
