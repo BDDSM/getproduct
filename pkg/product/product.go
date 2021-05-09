@@ -143,6 +143,29 @@ func (p *Product) UnmarshalJSON(b []byte) error {
 
 }
 
+func (p *Product) Rating() uint64 {
+	var rating uint64 = 0
+
+	rating += uint64(len(p.name))
+	rating += uint64(len(p.article))
+	rating += uint64(len(p.description))
+	rating += uint64(len(p.manufacturer))
+
+	if p.weight != 0.0 {
+		rating++
+	}
+
+	if p.unit != "" {
+		rating++
+	}
+
+	if p.picture != nil {
+		rating += uint64(len(p.picture))
+	}
+
+	return rating
+}
+
 func processUnit(unit string) string {
 	unit = strings.ToLower(unit)
 	unit = strings.Trim(unit, ".")

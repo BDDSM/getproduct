@@ -49,7 +49,7 @@ func getName(doc *goquery.Document) (name string) {
 	doc.Find(".pageTitle").EachWithBreak(func(i int, s *goquery.Selection) bool {
 		//if product didn't find .pageTitle has a "поиск:" text.
 		//In this case func returns false without filled properties
-		if strings.HasPrefix(strings.ToLower(s.Text()), "поиск:") {
+		if strings.HasPrefix(strings.ToLower(s.Text()), "поиск") {
 			return false
 		}
 		name = prepareName(s.Text())

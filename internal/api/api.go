@@ -8,6 +8,8 @@ import (
 	"github.com/korableg/getproduct/internal/errs"
 	"github.com/korableg/getproduct/pkg/productProviders/barcodeList"
 	"github.com/korableg/getproduct/pkg/productProviders/biostyle"
+	"github.com/korableg/getproduct/pkg/productProviders/disai"
+	"github.com/korableg/getproduct/pkg/productProviders/vekaptek"
 	"github.com/korableg/getproduct/pkg/productRepository"
 	"log"
 	"net/http"
@@ -21,6 +23,9 @@ func init() {
 	repository = productRepository.NewProductRepository()
 	repository.AddProvider(&barcodeList.BarcodeList{})
 	repository.AddProvider(&biostyle.BioStyle{})
+	repository.AddProvider(&vekaptek.Vekaptek{})
+	repository.AddProvider(&disai.Disai{})
+	//repository.AddProvider(&eapteka.Eapteka{})
 
 	if config.Debug() {
 		gin.SetMode(gin.DebugMode)
@@ -35,6 +40,7 @@ func init() {
 	engine.NoMethod(methodNotAllowed)
 
 	engine.GET("/api/barcode/:barcode", getProduct)
+	engine.GET("/api/thebestproduct/:barcode", getTheBestProduct)
 
 }
 
@@ -66,6 +72,19 @@ func getProduct(c *gin.Context) {
 	barcode := c.Params.ByName("barcode")
 
 	p, err := repository.Get(c, barcode)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, errs.New(err))
+		return
+	}
+
+	c.JSON(http.StatusOK, p)
+}
+
+func getTheBestProduct(c *gin.Context) {
+	barcode := c.Params.ByName("barcode")
+
+	p, err := repository.GetTheBest(c, barcode)
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, errs.New(err))

@@ -34,8 +34,9 @@ func (pr *ProductRepository) Get(ctx context.Context, barcode string) (*product.
 	pr.muProviders.RLock()
 	defer pr.muProviders.RUnlock()
 
-	if len(pr.providers) == 0 {
-		return nil, errors.New("product providers is empty")
+	err := pr.checkProviders()
+	if err != nil {
+		return nil, err
 	}
 
 	log.Println(fmt.Sprintf("getting product by barcode: %s", barcode))
@@ -43,36 +44,115 @@ func (pr *ProductRepository) Get(ctx context.Context, barcode string) (*product.
 	newCtx, cancelFunc := context.WithTimeout(ctx, time.Second*10)
 	defer cancelFunc()
 
-	wg := sync.WaitGroup{}
-	wg.Add(len(pr.providers))
-
 	productChan := make(chan *product.Product)
-	wgDone := make(chan struct{})
+	fetchingDoneChan := make(chan struct{})
 
-	for _, provider := range pr.providers {
-		go func() {
-			p, err := provider.GetProduct(newCtx, barcode)
-			wg.Done()
-			if err != nil {
-				log.Println(err)
-				return
-			}
-			productChan <- p
-		}()
-	}
-
-	go func() {
-		wg.Wait()
-		wgDone <- struct{}{}
-	}()
+	pr.getProductWithProviders(newCtx, barcode, productChan, fetchingDoneChan)
 
 	select {
 	case dst := <-productChan:
 		return dst, nil
-	case <-wgDone:
+	case <-fetchingDoneChan:
 		return nil, fmt.Errorf("product by barcode %s not found", barcode)
 	case <-newCtx.Done():
 		return nil, newCtx.Err()
 	}
+
+}
+
+func (pr *ProductRepository) GetTheBest(ctx context.Context, barcode string) (*product.Product, error) {
+
+	pr.muProviders.RLock()
+	defer pr.muProviders.RUnlock()
+
+	err := pr.checkProviders()
+	if err != nil {
+		return nil, err
+	}
+
+	log.Println(fmt.Sprintf("getting the best matches product by barcode: %s", barcode))
+
+	newCtx, cancelFunc := context.WithTimeout(ctx, time.Second*10)
+	defer cancelFunc()
+
+	products := make([]*product.Product, 0, len(pr.providers))
+	productChan := make(chan *product.Product)
+	fetchingDoneChan := make(chan struct{})
+
+	pr.getProductWithProviders(newCtx, barcode, productChan, fetchingDoneChan)
+
+	go func() {
+		for dst := range productChan {
+			products = append(products, dst)
+		}
+	}()
+
+	select {
+	case <-fetchingDoneChan:
+		if len(products) > 0 {
+			return pr.chooseTheBestProduct(products), nil
+		}
+		return nil, fmt.Errorf("product by barcode %s not found", barcode)
+	case <-newCtx.Done():
+		if len(products) > 0 {
+			return pr.chooseTheBestProduct(products), nil
+		}
+		return nil, newCtx.Err()
+	}
+
+	return nil, err
+
+}
+
+func (pr *ProductRepository) getProductWithProviders(
+	ctx context.Context, barcode string, productChan chan<- *product.Product, fetchingDoneChan chan<- struct{}) {
+
+	wg := &sync.WaitGroup{}
+	wg.Add(len(pr.providers))
+
+	for _, provider := range pr.providers {
+		go func(provider productProvider.ProductProvider, wg *sync.WaitGroup) {
+			p, err := provider.GetProduct(ctx, barcode)
+			defer wg.Done()
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			if p != nil {
+				productChan <- p
+			}
+
+		}(provider, wg)
+	}
+
+	go func() {
+		wg.Wait()
+		fetchingDoneChan <- struct{}{}
+	}()
+
+}
+
+func (pr *ProductRepository) checkProviders() error {
+	if len(pr.providers) == 0 {
+		return errors.New("product providers is empty")
+	}
+
+	return nil
+}
+
+func (pr *ProductRepository) chooseTheBestProduct(products []*product.Product) *product.Product {
+
+	winner := products[0]
+	winnerScore := winner.Rating()
+
+	for i := 1; i < len(products); i++ {
+		winnerCandidateRating := products[i].Rating()
+		if winnerCandidateRating > winnerScore {
+			winner = products[i]
+			winnerScore = winnerCandidateRating
+		}
+	}
+
+	return winner
 
 }

@@ -2,13 +2,11 @@ package biostyle
 
 import (
 	"context"
-	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	strip "github.com/grokify/html-strip-tags-go"
 	"github.com/korableg/getproduct/pkg/httpUtils"
 	"github.com/korableg/getproduct/pkg/product"
 	"log"
-	url2 "net/url"
 	"strconv"
 	"strings"
 )
@@ -17,7 +15,7 @@ type BioStyle struct{}
 
 func (b *BioStyle) GetProduct(ctx context.Context, barcode string) (*product.Product, error) {
 
-	url, err := b.getUrlByGoogle(ctx, barcode)
+	url, err := httpUtils.GetUrlByGoogle(ctx, barcode, "biostyle.biz")
 	if err != nil {
 		return nil, err
 	}
@@ -125,47 +123,5 @@ func (b *BioStyle) getAdditionalProperty(doc *goquery.Document, key string) (val
 	value = strings.TrimSpace(value)
 
 	return value
-
-}
-
-func (b *BioStyle) getUrlByGoogle(ctx context.Context, barcode string) (string, error) {
-
-	params := url2.Values{}
-	params.Add("q", fmt.Sprintf("%s site:biostyle.biz", barcode))
-
-	builder := strings.Builder{}
-	builder.WriteString("https://www.google.com/search?")
-	builder.WriteString(params.Encode())
-
-	response, err := httpUtils.Get(ctx, builder.String())
-	if err != nil {
-		return "", err
-	}
-
-	defer response.Body.Close()
-
-	doc, err := goquery.NewDocumentFromReader(response.Body)
-	if err != nil {
-		return "", err
-	}
-
-	var url string
-
-	doc.Find("div.g div div div a").EachWithBreak(func(parentIndex int, s *goquery.Selection) bool {
-
-		href, _ := s.Attr("href")
-		if strings.HasPrefix(href, "https://biostyle") {
-			url = href
-			return false
-		}
-
-		return true
-	})
-
-	if url == "" {
-		return "", fmt.Errorf("biostyle.biz: product with barcode %s not found by google", barcode)
-	}
-
-	return url, nil
 
 }

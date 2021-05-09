@@ -84,7 +84,7 @@ func (v *Vekaptek) getDescription(doc *goquery.Document) (description string) {
 
 		children := s.Children()
 		children.EachWithBreak(func(parentIndex int, sInternal *goquery.Selection) bool {
-			if strings.HasPrefix(sInternal.Text(), "Показания") {
+			if strings.HasPrefix(sInternal.Text(), "Показания") || strings.HasPrefix(sInternal.Text(), "Описание") {
 				if sInternal.Nodes != nil && len(sInternal.Nodes) > 0 {
 					description = sInternal.Nodes[0].NextSibling.Data
 					description = strings.TrimSpace(description)
