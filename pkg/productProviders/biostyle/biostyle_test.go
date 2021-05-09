@@ -1,4 +1,4 @@
-package barcodeList
+package biostyle
 
 import (
 	"context"
@@ -6,17 +6,17 @@ import (
 	"testing"
 )
 
-func TestBarcodeList(t *testing.T) {
+func TestBioStyle(t *testing.T) {
 
 	const barcode_karsulen = "4612732330056"
 	const karsulen_name = "Карсулен флакон, 100 мл"
 	const barcode_ksila = "4742496000381"
-	const ksila_name = "КСИЛА Раствор для инъекций (50 мл) Interchemie"
+	const ksila_name = "Ксила флак. 50 мл."
 	const barcode_fake = "fake"
 
 	ctx := context.Background()
 
-	bl := &BarcodeList{}
+	bl := &BioStyle{}
 	pr, err := bl.GetProduct(ctx, barcode_karsulen)
 	if err != nil {
 		t.Fatal(err)
@@ -43,7 +43,7 @@ func TestBarcodeList(t *testing.T) {
 		t.Errorf("name should %s, have %s", ksila_name, pr.Name())
 	}
 
-	errorTextShould := "barcode-list.ru: product by barcode fake not found"
+	errorTextShould := "biostyle.biz: product with barcode fake not found by google"
 	pr, err = bl.GetProduct(ctx, barcode_fake)
 	if err.Error() != errorTextShould {
 		t.Fatal(fmt.Errorf("the error should be \"%s\"", errorTextShould))

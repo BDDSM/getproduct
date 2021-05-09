@@ -13,7 +13,7 @@ type mockProductProvider struct {
 func (m *mockProductProvider) GetProduct(ctx context.Context, barcode string) (*product.Product, error) {
 
 	if barcode == "111" {
-		return product.NewProduct("111", "TestProduct", "шт", "TestDescription", "TestM"), nil
+		return product.New("111", "http://testurl.ru"), nil
 	}
 
 	return nil, errors.New("product didn't find by barcode")

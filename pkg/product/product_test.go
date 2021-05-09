@@ -3,6 +3,7 @@ package product
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -10,11 +11,20 @@ func TestProduct(t *testing.T) {
 
 	const barcode = "442353252342342"
 	const name = "test"
+	const article = "1234"
 	const description = "TestDescription"
 	const manufacturer = "TestManufacturer"
 	const unit = "TestUnit"
+	const url = "http://testurl.ru"
+	const weight = 0.4
 
-	p := NewProduct(barcode, name, unit, description, manufacturer)
+	p := New(barcode, url)
+	p.SetName(name)
+	p.SetDescription(description)
+	p.SetManufacturer(manufacturer)
+	p.SetUnit(unit)
+	p.SetArticle(article)
+	p.SetWeight(0.4)
 
 	b, err := json.Marshal(p)
 	if err != nil {
@@ -43,8 +53,12 @@ func TestProduct(t *testing.T) {
 		t.Error(fmt.Errorf("description doesn't equal %s", description))
 	}
 
-	if p.Unit() != unit {
+	if p.Unit() != strings.ToLower(unit) {
 		t.Error(fmt.Errorf("unit doesn't equal %s", unit))
+	}
+
+	if p.Weight() != weight {
+		t.Error(fmt.Errorf("weight doesn't equal %f", weight))
 	}
 
 }

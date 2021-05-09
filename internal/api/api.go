@@ -7,6 +7,7 @@ import (
 	"github.com/korableg/getproduct/internal/config"
 	"github.com/korableg/getproduct/internal/errs"
 	"github.com/korableg/getproduct/pkg/productProviders/barcodeList"
+	"github.com/korableg/getproduct/pkg/productProviders/biostyle"
 	"github.com/korableg/getproduct/pkg/productRepository"
 	"log"
 	"net/http"
@@ -19,6 +20,7 @@ func init() {
 
 	repository = productRepository.NewProductRepository()
 	repository.AddProvider(&barcodeList.BarcodeList{})
+	repository.AddProvider(&biostyle.BioStyle{})
 
 	if config.Debug() {
 		gin.SetMode(gin.DebugMode)
