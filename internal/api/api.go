@@ -9,6 +9,7 @@ import (
 	"github.com/korableg/getproduct/pkg/productProviders/barcodeList"
 	"github.com/korableg/getproduct/pkg/productProviders/biostyle"
 	"github.com/korableg/getproduct/pkg/productProviders/disai"
+	"github.com/korableg/getproduct/pkg/productProviders/nationalCatalog"
 	"github.com/korableg/getproduct/pkg/productProviders/vekaptek"
 	"github.com/korableg/getproduct/pkg/productRepository"
 	"log"
@@ -25,7 +26,11 @@ func init() {
 	repository.AddProvider(&biostyle.BioStyle{})
 	repository.AddProvider(&vekaptek.Vekaptek{})
 	repository.AddProvider(&disai.Disai{})
-	//repository.AddProvider(&eapteka.Eapteka{})
+
+	if config.ChromeDPWSAddress() != "" {
+		repository.AddProvider(nationalCatalog.New(config.ChromeDPWSAddress()))
+		//repository.AddProvider(&eapteka.Eapteka{})
+	}
 
 	if config.Debug() {
 		gin.SetMode(gin.DebugMode)

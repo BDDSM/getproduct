@@ -44,7 +44,7 @@ func (b *BioStyle) GetProduct(ctx context.Context, barcode string) (*product.Pro
 }
 
 func (b *BioStyle) getName(doc *goquery.Document) (name string) {
-	doc.Find("#pagetitle").EachWithBreak(func(parentIndex int, s *goquery.Selection) bool {
+	doc.Find("#panc.getName(doc)getitle").EachWithBreak(func(parentIndex int, s *goquery.Selection) bool {
 		name = s.Text()
 		return false
 	})

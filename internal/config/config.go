@@ -6,14 +6,16 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 )
 
 var instance *configData
 
 type configData struct {
-	address string
-	port    uint
-	debug   bool
+	address           string
+	port              uint
+	debug             bool
+	chromedpWsAddress string
 }
 
 func init() {
@@ -31,10 +33,16 @@ func init() {
 	}
 
 	instance = &configData{
-		address: getEnv("ADDRESS", "0.0.0.0"),
-		port:    getEnvAsUInt("PORT", 1218),
-		debug:   getEnvAsBool("DEBUG", false),
+		address:           getEnv("ADDRESS", "0.0.0.0"),
+		port:              getEnvAsUInt("PORT", 1218),
+		debug:             getEnvAsBool("DEBUG", false),
+		chromedpWsAddress: getEnv("CHROMEDP_WS_ADDRESS", ""),
 	}
+
+	if instance.chromedpWsAddress != "" && !strings.HasPrefix(instance.chromedpWsAddress, "ws://") {
+		instance.chromedpWsAddress = "ws://" + instance.chromedpWsAddress
+	}
+
 }
 
 func Address() string {
@@ -47,6 +55,10 @@ func Port() uint {
 
 func Debug() bool {
 	return instance.debug
+}
+
+func ChromeDPWSAddress() string {
+	return instance.chromedpWsAddress
 }
 
 func Version() string {
