@@ -25,7 +25,8 @@ func New(chromedpWsAddress string) *NationalCatalog {
 }
 
 func (nc *NationalCatalog) GetProduct(ctx context.Context, barcode string) (*product.Product, error) {
-	url, err := httpUtils.GetUrlByYandex(ctx, barcode, "национальный-каталог.рф", nc.chromedpWsAddress)
+	url, err := httpUtils.GetUrlByYandex(
+		ctx, barcode, fmt.Sprintf("национальный-каталог.рф/product/%s", barcode), nc.chromedpWsAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -51,6 +52,7 @@ func (nc *NationalCatalog) GetProduct(ctx context.Context, barcode string) (*pro
 	p.SetUnit(nc.getUnit(doc))
 	p.SetWeight(nc.getWeight(doc))
 	p.SetDescription(nc.getDescription(doc))
+	p.SetManufacturer(nc.getManufacturer(doc))
 	p.SetPicture(nc.getPicture(ctx, doc))
 
 	return p, nil
@@ -84,9 +86,39 @@ func (nc *NationalCatalog) getDescription(doc *goquery.Document) (description st
 	return description
 }
 
+func (nc *NationalCatalog) getManufacturer(doc *goquery.Document) (manufacturer string) {
+
+	doc.Find("ul.list-unstyled li").EachWithBreak(func(parentIndex int, s *goquery.Selection) bool {
+
+		sText := strings.TrimSpace(s.Text())
+		sText = strings.ToLower(sText)
+
+		if strings.HasPrefix(sText, "производитель") {
+			s.Children().Each(func(i int, sInternal *goquery.Selection) {
+				manufacturer = sInternal.Text()
+			})
+
+			return false
+		}
+
+		return true
+	})
+
+	manufacturer = strings.TrimSpace(manufacturer)
+
+	return manufacturer
+}
+
 func (nc *NationalCatalog) getWeight(doc *goquery.Document) (weight float64) {
 
 	weightRaw := nc.getPropertyFromTable(doc, "заявленный объём")
+	if weightRaw == "" {
+		weightRaw = nc.getPropertyFromTable(doc, "вес нетто")
+	}
+
+	if weightRaw == "" {
+		return weight
+	}
 
 	var err error
 

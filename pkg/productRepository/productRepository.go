@@ -77,30 +77,31 @@ func (pr *ProductRepository) GetTheBest(ctx context.Context, barcode string) (*p
 
 	products := make([]*product.Product, 0, len(pr.providers))
 	productChan := make(chan *product.Product)
+
 	fetchingDoneChan := make(chan struct{})
 
 	pr.getProductWithProviders(newCtx, barcode, productChan, fetchingDoneChan)
 
-	go func() {
-		for dst := range productChan {
-			products = append(products, dst)
-		}
-	}()
+	for {
+		select {
+		case dst, ok := <-productChan:
+			if ok {
+				products = append(products, dst)
+			} else {
+				if len(products) > 0 {
+					return pr.chooseTheBestProduct(products), nil
+				} else {
+					return nil, fmt.Errorf("product by barcode %s not found", barcode)
+				}
+			}
 
-	select {
-	case <-fetchingDoneChan:
-		if len(products) > 0 {
-			return pr.chooseTheBestProduct(products), nil
+		case <-newCtx.Done():
+			if len(products) > 0 {
+				return pr.chooseTheBestProduct(products), nil
+			}
+			return nil, newCtx.Err()
 		}
-		return nil, fmt.Errorf("product by barcode %s not found", barcode)
-	case <-newCtx.Done():
-		if len(products) > 0 {
-			return pr.chooseTheBestProduct(products), nil
-		}
-		return nil, newCtx.Err()
 	}
-
-	return nil, err
 
 }
 
@@ -127,6 +128,7 @@ func (pr *ProductRepository) getProductWithProviders(
 
 	go func() {
 		wg.Wait()
+		close(productChan)
 		fetchingDoneChan <- struct{}{}
 	}()
 
