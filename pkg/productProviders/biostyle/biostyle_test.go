@@ -16,7 +16,7 @@ func TestBioStyle(t *testing.T) {
 
 	ctx := context.Background()
 
-	bl := &BioStyle{}
+	bl := New("ws://localhost:3000")
 	pr, err := bl.GetProduct(ctx, barcode_karsulen)
 	if err != nil {
 		t.Fatal(err)

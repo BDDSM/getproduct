@@ -3,6 +3,9 @@ package api
 import (
 	"errors"
 	"fmt"
+	"log"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/korableg/getproduct/internal/config"
 	"github.com/korableg/getproduct/internal/errs"
@@ -12,8 +15,6 @@ import (
 	"github.com/korableg/getproduct/pkg/productProviders/nationalCatalog"
 	"github.com/korableg/getproduct/pkg/productProviders/vekaptek"
 	"github.com/korableg/getproduct/pkg/productRepository"
-	"log"
-	"net/http"
 )
 
 var engine *gin.Engine
@@ -23,12 +24,13 @@ func init() {
 
 	repository = productRepository.NewProductRepository()
 	repository.AddProvider(&barcodeList.BarcodeList{})
-	repository.AddProvider(&biostyle.BioStyle{})
+
 	repository.AddProvider(&vekaptek.Vekaptek{})
 	repository.AddProvider(&disai.Disai{})
 
 	if config.ChromeDPWSAddress() != "" {
 		repository.AddProvider(nationalCatalog.New(config.ChromeDPWSAddress()))
+		repository.AddProvider(biostyle.New(config.ChromeDPWSAddress()))
 		//repository.AddProvider(&eapteka.Eapteka{})
 	}
 

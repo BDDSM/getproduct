@@ -1,50 +1,73 @@
 package biostyle
 
 import (
+	"bytes"
 	"context"
+	"errors"
+	"io"
+	"log"
+	"strconv"
+	"strings"
+
 	"github.com/PuerkitoBio/goquery"
 	strip "github.com/grokify/html-strip-tags-go"
 	"github.com/korableg/getproduct/pkg/httpUtils"
 	"github.com/korableg/getproduct/pkg/product"
-	"log"
-	"strconv"
-	"strings"
 )
 
-type BioStyle struct{}
+type BioStyle struct {
+	chromeDPWSAddress string
+}
 
-func (b *BioStyle) GetProduct(ctx context.Context, barcode string) (*product.Product, error) {
+func New(chromeDPWSAddress string) *BioStyle {
+	b := BioStyle{
+		chromeDPWSAddress: chromeDPWSAddress,
+	}
+
+	return &b
+
+}
+
+func (b *BioStyle) GetProduct(ctx context.Context, barcode string) (p *product.Product, err error) {
+
+	defer func() {
+		if r := recover(); r != nil {
+			err = errors.New("biostyle.biz: fetching aborted, function GetProduct was paniced")
+		}
+	}()
 
 	url, err := httpUtils.GetUrlByGoogle(ctx, barcode, "biostyle.biz")
 	if err != nil {
 		return nil, err
 	}
 
-	response, err := httpUtils.Get(ctx, url)
-	if err != nil {
-		return nil, err
-	}
-	defer response.Body.Close()
-
-	doc, err := goquery.NewDocumentFromReader(response.Body)
+	body, err := httpUtils.GetByChromedp(ctx, b.chromeDPWSAddress, url)
 	if err != nil {
 		return nil, err
 	}
 
-	p := product.New(barcode, url)
+	reader := bytes.NewReader(body)
+
+	doc, err := goquery.NewDocumentFromReader(reader)
+	if err != nil {
+		return nil, err
+	}
+
+	p = product.New(barcode, url)
 	p.SetName(b.getName(doc))
 	p.SetArticle(b.getArticle(doc))
 	p.SetDescription(b.getDescription(doc))
 	p.SetManufacturer(b.getManufacturer(doc))
 	p.SetUnit(b.getUnit(doc))
 	p.SetWeight(b.getWeight(doc))
+	p.SetPicture(b.getPicture(ctx, doc))
 
 	return p, nil
 
 }
 
 func (b *BioStyle) getName(doc *goquery.Document) (name string) {
-	doc.Find("#panc.getName(doc)getitle").EachWithBreak(func(parentIndex int, s *goquery.Selection) bool {
+	doc.Find("#pagetitle").EachWithBreak(func(parentIndex int, s *goquery.Selection) bool {
 		name = s.Text()
 		return false
 	})
@@ -98,6 +121,27 @@ func (b *BioStyle) getWeight(doc *goquery.Document) (weight float64) {
 	return weight
 }
 
+func (b *BioStyle) getPicture(ctx context.Context, doc *goquery.Document) (picture []byte) {
+
+	doc.Find("img.product-detail-gallery__picture").EachWithBreak(func(parentIndex int, s *goquery.Selection) bool {
+		if src, ok := s.Attr("src"); ok {
+			if !strings.HasPrefix(src, "https") {
+				src = "https:" + src
+			}
+			response, err := httpUtils.Get(ctx, src)
+			if err != nil {
+				log.Println(err)
+			}
+			defer response.Body.Close()
+			picture, err = io.ReadAll(response.Body)
+		}
+
+		return false
+	})
+	return picture
+
+}
+
 func (b *BioStyle) getAdditionalProperty(doc *goquery.Document, key string) (value string) {
 
 	doc.Find("tr[itemprop=\"additionalProperty\"]").EachWithBreak(func(parentIndex int, s *goquery.Selection) bool {
@@ -118,6 +162,7 @@ func (b *BioStyle) getAdditionalProperty(doc *goquery.Document, key string) (val
 		}
 
 		return !itemFound
+
 	})
 
 	value = strings.TrimSpace(value)

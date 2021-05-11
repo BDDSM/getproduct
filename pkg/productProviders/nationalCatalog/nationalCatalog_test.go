@@ -14,7 +14,7 @@ func TestNationalCatalog(t *testing.T) {
 
 	ctx := context.Background()
 
-	bl := &NationalCatalog{}
+	bl := New("ws://localhost:3000")
 
 	pr, err := bl.GetProduct(ctx, barcode)
 	if err != nil {
