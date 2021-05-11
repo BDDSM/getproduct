@@ -2,6 +2,7 @@ package vekaptek
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/korableg/getproduct/pkg/httpUtils"
@@ -16,7 +17,13 @@ import (
 
 type Vekaptek struct{}
 
-func (v *Vekaptek) GetProduct(ctx context.Context, barcode string) (*product.Product, error) {
+func (v *Vekaptek) GetProduct(ctx context.Context, barcode string) (p *product.Product, err error) {
+
+	defer func() {
+		if r := recover(); r != nil {
+			err = errors.New("vekaptek.ru: fetching aborted, function GetProduct was paniced")
+		}
+	}()
 
 	url, err := v.getUrl(ctx, barcode)
 	if err != nil {
@@ -34,7 +41,7 @@ func (v *Vekaptek) GetProduct(ctx context.Context, barcode string) (*product.Pro
 		return nil, err
 	}
 
-	p := product.New(barcode, url)
+	p = product.New(barcode, url)
 	p.SetName(v.getName(doc))
 	p.SetArticle(v.getArticle(doc))
 	p.SetDescription(v.getDescription(doc))

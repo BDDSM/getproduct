@@ -2,6 +2,7 @@ package barcodeList
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/korableg/getproduct/pkg/httpUtils"
@@ -14,7 +15,13 @@ const endpointTemplate = "https://barcode-list.ru/barcode/RU/Поиск.htm?barc
 
 type BarcodeList struct{}
 
-func (b *BarcodeList) GetProduct(ctx context.Context, barcode string) (*product.Product, error) {
+func (b *BarcodeList) GetProduct(ctx context.Context, barcode string) (p *product.Product, err error) {
+
+	defer func() {
+		if r := recover(); r != nil {
+			err = errors.New("barcode-list.ru: fetching aborted, function GetProduct was paniced")
+		}
+	}()
 
 	url := fmt.Sprintf(endpointTemplate, barcode)
 
@@ -36,7 +43,7 @@ func (b *BarcodeList) GetProduct(ctx context.Context, barcode string) (*product.
 	}
 	unit := getUnit(doc)
 
-	p := product.New(barcode, url)
+	p = product.New(barcode, url)
 	p.SetName(name)
 	p.SetUnit(unit)
 

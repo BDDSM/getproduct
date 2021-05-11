@@ -2,6 +2,7 @@ package disai
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/korableg/getproduct/pkg/httpUtils"
@@ -12,7 +13,13 @@ import (
 
 type Disai struct{}
 
-func (d *Disai) GetProduct(ctx context.Context, barcode string) (*product.Product, error) {
+func (d *Disai) GetProduct(ctx context.Context, barcode string) (p *product.Product, err error) {
+
+	defer func() {
+		if r := recover(); r != nil {
+			err = errors.New("ru.disai.org: fetching aborted, function GetProduct was paniced")
+		}
+	}()
 
 	url := fmt.Sprintf("http://ru.disai.org/barcode/ean-13/%s", barcode)
 
@@ -38,7 +45,7 @@ func (d *Disai) GetProduct(ctx context.Context, barcode string) (*product.Produc
 		return nil, fmt.Errorf("ru.disai.org: product by barcode %s not found", barcode)
 	}
 
-	p := product.New(barcode, url)
+	p = product.New(barcode, url)
 	p.SetName(name)
 	p.SetManufacturer(d.getManufacturer(doc))
 

@@ -2,6 +2,7 @@ package nationalCatalog
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/korableg/getproduct/pkg/httpUtils"
@@ -24,7 +25,14 @@ func New(chromedpWsAddress string) *NationalCatalog {
 	return &nc
 }
 
-func (nc *NationalCatalog) GetProduct(ctx context.Context, barcode string) (*product.Product, error) {
+func (nc *NationalCatalog) GetProduct(ctx context.Context, barcode string) (p *product.Product, err error) {
+
+	defer func() {
+		if r := recover(); r != nil {
+			err = errors.New("национальный-каталог.рф: fetching aborted, function GetProduct was paniced")
+		}
+	}()
+
 	url, err := httpUtils.GetUrlByYandex(
 		ctx, barcode, fmt.Sprintf("национальный-каталог.рф/product/%s", barcode), nc.chromedpWsAddress)
 	if err != nil {
@@ -47,7 +55,7 @@ func (nc *NationalCatalog) GetProduct(ctx context.Context, barcode string) (*pro
 		return nil, fmt.Errorf("национальный-каталог.рф: product by barcode %s not found", barcode)
 	}
 
-	p := product.New(barcode, url)
+	p = product.New(barcode, url)
 	p.SetName(nc.getName(doc))
 	p.SetUnit(nc.getUnit(doc))
 	p.SetWeight(nc.getWeight(doc))
