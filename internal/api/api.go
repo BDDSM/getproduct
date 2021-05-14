@@ -22,7 +22,7 @@ var repository *productRepository.ProductRepository
 
 func init() {
 
-	repository = productRepository.NewProductRepository()
+	repository = productRepository.New(nil)
 	repository.AddProvider(&barcodeList.BarcodeList{})
 
 	repository.AddProvider(&vekaptek.Vekaptek{})

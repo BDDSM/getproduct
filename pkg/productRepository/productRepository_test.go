@@ -8,7 +8,7 @@ import (
 
 func TestProductRepository(t *testing.T) {
 
-	pr := NewProductRepository()
+	pr := New(nil)
 	_, err := pr.Get(context.Background(), "fake")
 	if err == nil {
 		t.Errorf("error should be \"product providers is empty\"")

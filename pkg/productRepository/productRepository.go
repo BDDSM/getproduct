@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/korableg/getproduct/pkg/product"
+	"github.com/korableg/getproduct/pkg/productLocalProvider"
 	"github.com/korableg/getproduct/pkg/productProvider"
 	"log"
 	"sync"
@@ -12,13 +13,16 @@ import (
 )
 
 type ProductRepository struct {
-	providers   []productProvider.ProductProvider
-	muProviders sync.RWMutex
+	providers     []productProvider.ProductProvider
+	localProvider productLocalProvider.ProductLocalProvider
+	muProviders   sync.RWMutex
 }
 
-func NewProductRepository() *ProductRepository {
+func New(localProvider productLocalProvider.ProductLocalProvider) *ProductRepository {
 	pr := ProductRepository{
-		providers: make([]productProvider.ProductProvider, 0, 10),
+		providers:     make([]productProvider.ProductProvider, 0, 10),
+		localProvider: localProvider,
+		muProviders:   sync.RWMutex{},
 	}
 
 	return &pr
@@ -62,6 +66,13 @@ func (pr *ProductRepository) Get(ctx context.Context, barcode string) (*product.
 
 func (pr *ProductRepository) GetTheBest(ctx context.Context, barcode string) (*product.Product, error) {
 
+	if pr.localProvider != nil {
+		p, _ := pr.localProvider.GetProduct(ctx, barcode)
+		if p != nil {
+			return p, nil
+		}
+	}
+
 	pr.muProviders.RLock()
 	defer pr.muProviders.RUnlock()
 
@@ -89,7 +100,11 @@ func (pr *ProductRepository) GetTheBest(ctx context.Context, barcode string) (*p
 				products = append(products, dst)
 			} else {
 				if len(products) > 0 {
-					return pr.chooseTheBestProduct(products), nil
+					p := pr.chooseTheBestProduct(products)
+					if pr.localProvider != nil {
+						pr.localProvider.AddProduct(ctx, p)
+					}
+					return p, nil
 				} else {
 					return nil, fmt.Errorf("product by barcode %s not found", barcode)
 				}
