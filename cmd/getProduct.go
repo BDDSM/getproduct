@@ -14,10 +14,10 @@ func main() {
 
 	api.Run()
 
-	quit := make(chan os.Signal)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
-	log.Println("GetProduct was started")
+	log.Println("GetProduct has started")
 
 	<-quit
 

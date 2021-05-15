@@ -61,6 +61,8 @@ func init() {
 	engine.GET("/api/barcode/:barcode", getProduct)
 	engine.GET("/api/thebestproduct/:barcode", getTheBestProduct)
 
+	engine.DELETE("/api/localstorage/:barcode", deleteProductFromLocalRepository)
+
 }
 
 func Run() {
@@ -111,4 +113,17 @@ func getTheBestProduct(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, p)
+}
+
+func deleteProductFromLocalRepository(c *gin.Context) {
+	barcode := c.Params.ByName("barcode")
+
+	err := repository.DeleteFromLocalProvider(c, barcode)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, errs.New(err))
+		return
+	}
+
+	c.Status(http.StatusOK)
 }

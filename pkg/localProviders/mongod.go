@@ -2,14 +2,13 @@ package localProviders
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log"
 	"net/url"
 
 	"github.com/korableg/getproduct/pkg/product"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -91,9 +90,16 @@ func (m *MongoDB) addProduct(ctx context.Context, p *product.Product, colName st
 	}
 	defer m.disconnect(ctx, client)
 
-	pJson, err := json.Marshal(p)
-	if err != nil {
-		return err
+	pBson := bson.M{
+		"barcode":      p.Barcode(),
+		"article":      p.Article(),
+		"name":         p.Name(),
+		"description":  p.Description(),
+		"manufacturer": p.Manufacturer(),
+		"url":          p.Url(),
+		"picture":      p.Picture(),
+		"unit":         p.Unit(),
+		"weight":       p.Weight(),
 	}
 
 	collection := client.Database(dbName).Collection(colName)
@@ -105,7 +111,7 @@ func (m *MongoDB) addProduct(ctx context.Context, p *product.Product, colName st
 		ReturnDocument: &returnDocument,
 	}
 	filter := bson.M{"barcode": p.Barcode()}
-	data := bson.M{"barcode": p.Barcode(), "value": pJson}
+	data := bson.M{"barcode": p.Barcode(), "value": pBson}
 
 	res := collection.FindOneAndReplace(ctx, filter, data, &opts)
 
@@ -138,21 +144,29 @@ func (m *MongoDB) getProduct(ctx context.Context, barcode string, colName string
 		return nil, err
 	}
 
-	p := product.Product{}
-	err = json.Unmarshal(mongoData["value"].(primitive.Binary).Data, &p)
-	if err != nil {
-		return nil, err
+	mongoObj := mongoData["value"].(map[string]interface{})
+
+	p := product.New(mongoObj["barcode"].(string), mongoObj["url"].(string))
+	p.SetArticle(mongoObj["article"].(string))
+	p.SetName(mongoObj["name"].(string))
+	p.SetDescription(mongoObj["description"].(string))
+	p.SetManufacturer(mongoObj["manufacturer"].(string))
+	p.SetUnit(mongoObj["unit"].(string))
+	p.SetWeight(mongoObj["weight"].(float64))
+
+	if mongoObj["picture"] != nil {
+		p.SetPicture(mongoObj["picture"].(primitive.Binary).Data)
 	}
 
-	return &p, nil
+	return p, nil
 
 }
 
-func (m *MongoDB) DeleteProduct(ctx context.Context, p *product.Product) error {
-	return m.deleteProduct(ctx, p, collectionName)
+func (m *MongoDB) DeleteProduct(ctx context.Context, barcode string) error {
+	return m.deleteProduct(ctx, barcode, collectionName)
 }
 
-func (m *MongoDB) deleteProduct(ctx context.Context, p *product.Product, colName string) error {
+func (m *MongoDB) deleteProduct(ctx context.Context, barcode string, colName string) error {
 
 	client, err := m.connect(ctx)
 	if err != nil {
@@ -161,7 +175,7 @@ func (m *MongoDB) deleteProduct(ctx context.Context, p *product.Product, colName
 
 	defer m.disconnect(ctx, client)
 
-	filter := bson.M{"barcode": p.Barcode()}
+	filter := bson.M{"barcode": barcode}
 
 	_, err = client.Database(dbName).Collection(colName).DeleteOne(ctx, filter)
 

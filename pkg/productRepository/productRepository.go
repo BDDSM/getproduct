@@ -120,6 +120,16 @@ func (pr *ProductRepository) GetTheBest(ctx context.Context, barcode string) (*p
 
 }
 
+func (pr *ProductRepository) DeleteFromLocalProvider(ctx context.Context, barcode string) error {
+
+	if pr.localProvider == nil {
+		return nil
+	}
+
+	return pr.localProvider.DeleteProduct(ctx, barcode)
+
+}
+
 func (pr *ProductRepository) getProductWithProviders(
 	ctx context.Context, barcode string, productChan chan<- *product.Product, fetchingDoneChan chan<- struct{}) {
 
