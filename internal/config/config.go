@@ -2,16 +2,25 @@ package config
 
 import (
 	"fmt"
-	"github.com/joho/godotenv"
 	"log"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/joho/godotenv"
 )
 
 var instance *configData
 
+type mongoDBConfig struct {
+	Hostname string
+	Port     int
+	Username string
+	Password string
+}
+
 type configData struct {
+	mongoDBConfig     *mongoDBConfig
 	address           string
 	port              uint
 	debug             bool
@@ -43,6 +52,17 @@ func init() {
 		instance.chromedpWsAddress = "ws://" + instance.chromedpWsAddress
 	}
 
+	useMongoDB := getEnvAsBool("MONGODB_USE", false)
+	if useMongoDB {
+		mc := mongoDBConfig{
+			Hostname: getEnv("MONGODB_HOSTNAME", ""),
+			Port:     int(getEnvAsUInt("MONGODB_PORT", 0)),
+			Username: getEnv("MONGODB_USERNAME", ""),
+			Password: getEnv("MONGODB_PASSWORD", ""),
+		}
+		instance.mongoDBConfig = &mc
+	}
+
 }
 
 func Address() string {
@@ -59,6 +79,10 @@ func Debug() bool {
 
 func ChromeDPWSAddress() string {
 	return instance.chromedpWsAddress
+}
+
+func MongoDBConfig() *mongoDBConfig {
+	return instance.mongoDBConfig
 }
 
 func Version() string {

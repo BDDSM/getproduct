@@ -9,6 +9,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/korableg/getproduct/internal/config"
 	"github.com/korableg/getproduct/internal/errs"
+	"github.com/korableg/getproduct/pkg/localProviders"
+	"github.com/korableg/getproduct/pkg/productLocalProvider"
 	"github.com/korableg/getproduct/pkg/productProviders/barcodeList"
 	"github.com/korableg/getproduct/pkg/productProviders/biostyle"
 	"github.com/korableg/getproduct/pkg/productProviders/disai"
@@ -22,7 +24,17 @@ var repository *productRepository.ProductRepository
 
 func init() {
 
-	repository = productRepository.New(nil)
+	var localProvider productLocalProvider.ProductLocalProvider
+
+	mongoCfg := config.MongoDBConfig()
+	if mongoCfg != nil {
+		var err error
+		if localProvider, err = localProviders.NewMongoDB(mongoCfg.Hostname, mongoCfg.Port, mongoCfg.Username, mongoCfg.Password); err != nil {
+			panic(err)
+		}
+	}
+
+	repository = productRepository.New(localProvider)
 	repository.AddProvider(&barcodeList.BarcodeList{})
 
 	repository.AddProvider(&vekaptek.Vekaptek{})
