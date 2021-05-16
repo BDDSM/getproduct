@@ -41,6 +41,10 @@ func (v *Vekaptek) GetProduct(ctx context.Context, barcode string) (p *product.P
 		return nil, err
 	}
 
+	if !v.verifyBarcode(doc, barcode) {
+		return nil, fmt.Errorf("vekaptek.ru: product by barcode %s not found", barcode)
+	}
+
 	p = product.New(barcode, url)
 	p.SetName(v.getName(doc))
 	p.SetArticle(v.getArticle(doc))
@@ -202,5 +206,38 @@ func (v *Vekaptek) getUrl(ctx context.Context, barcode string) (string, error) {
 		return "", fmt.Errorf("vekaptek.ru: product with barcode %s not found", barcode)
 	}
 	return url, nil
+
+}
+
+func (v *Vekaptek) verifyBarcode(doc *goquery.Document, barcode string) bool {
+
+	var barcodeFromPage string
+
+	doc.Find("#tab-description").EachWithBreak(func(parentIndex int, s *goquery.Selection) bool {
+
+		children := s.Children()
+		children.EachWithBreak(func(parentIndex int, sInternal *goquery.Selection) bool {
+			if strings.HasPrefix(sInternal.Text(), "Штрих-код") {
+				if sInternal.Nodes != nil && len(sInternal.Nodes) > 0 {
+
+					reg, _ := regexp.Compile(`Штрих-код:\s[\d.]*`)
+
+					barcodeFromPage = sInternal.Nodes[0].NextSibling.Data
+					barcodeFromPage = reg.FindString(barcodeFromPage)
+					barcodeFromPage = strings.ReplaceAll(barcodeFromPage, "Штрих-код:", "")
+					barcodeFromPage = strings.TrimSpace(barcodeFromPage)
+
+				}
+
+				return false
+			}
+			return true
+
+		})
+
+		return false
+	})
+
+	return barcodeFromPage == barcode
 
 }

@@ -1,4 +1,4 @@
-package localProviders
+package mongod
 
 import (
 	"context"
@@ -39,7 +39,7 @@ func TestMongoDB(t *testing.T) {
 	p.SetArticle("235435")
 	p.SetUnit("шт")
 
-	err = m.deleteProduct(ctx, p, collectionNameTest)
+	err = m.deleteProduct(ctx, barcode, collectionNameTest)
 	if err != nil {
 		t.Error(err)
 	}
@@ -80,7 +80,7 @@ func TestMongoDB(t *testing.T) {
 		t.Errorf("product hasn't replaced with barcode %s", barcode)
 	}
 
-	err = m.deleteProduct(ctx, p, collectionNameTest)
+	err = m.deleteProduct(ctx, barcode, collectionNameTest)
 	if err != nil {
 		t.Error(err)
 	}

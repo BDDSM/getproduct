@@ -1,13 +1,24 @@
 package eapteka
 
 import (
+	"bytes"
 	"context"
+
 	"github.com/PuerkitoBio/goquery"
 	"github.com/korableg/getproduct/pkg/httpUtils"
 	"github.com/korableg/getproduct/pkg/product"
 )
 
-type Eapteka struct{}
+type Eapteka struct {
+	chromeDPWSAddress string
+}
+
+func New(chromeDPWSAddress string) *Eapteka {
+	e := Eapteka{
+		chromeDPWSAddress: chromeDPWSAddress,
+	}
+	return &e
+}
 
 func (e *Eapteka) GetProduct(ctx context.Context, barcode string) (*product.Product, error) {
 
@@ -16,14 +27,14 @@ func (e *Eapteka) GetProduct(ctx context.Context, barcode string) (*product.Prod
 		return nil, err
 	}
 
-	response, err := httpUtils.Get(ctx, url)
+	body, err := httpUtils.GetByChromedp(ctx, e.chromeDPWSAddress, url)
 	if err != nil {
 		return nil, err
 	}
 
-	defer response.Body.Close()
+	reader := bytes.NewReader(body)
 
-	doc, err := goquery.NewDocumentFromReader(response.Body)
+	doc, err := goquery.NewDocumentFromReader(reader)
 	if err != nil {
 		return nil, err
 	}

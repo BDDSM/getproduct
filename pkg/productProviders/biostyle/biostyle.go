@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"strconv"
@@ -51,6 +52,10 @@ func (b *BioStyle) GetProduct(ctx context.Context, barcode string) (p *product.P
 	doc, err := goquery.NewDocumentFromReader(reader)
 	if err != nil {
 		return nil, err
+	}
+
+	if !b.verifyBarcode(doc, barcode) {
+		return nil, fmt.Errorf("biostyle.biz: product by barcode %s not found", barcode)
 	}
 
 	p = product.New(barcode, url)
@@ -140,6 +145,11 @@ func (b *BioStyle) getPicture(ctx context.Context, doc *goquery.Document) (pictu
 	})
 	return picture
 
+}
+
+func (b *BioStyle) verifyBarcode(doc *goquery.Document, barcode string) bool {
+	barcodeFromPage := b.getAdditionalProperty(doc, "штрихкод")
+	return barcodeFromPage == barcode
 }
 
 func (b *BioStyle) getAdditionalProperty(doc *goquery.Document, key string) (value string) {

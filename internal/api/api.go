@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/korableg/getproduct/internal/config"
 	"github.com/korableg/getproduct/internal/errs"
-	"github.com/korableg/getproduct/pkg/localProviders"
+	"github.com/korableg/getproduct/pkg/localProviders/mongod"
 	"github.com/korableg/getproduct/pkg/productLocalProvider"
 	"github.com/korableg/getproduct/pkg/productProviders/barcodeList"
 	"github.com/korableg/getproduct/pkg/productProviders/biostyle"
@@ -29,7 +29,8 @@ func init() {
 	mongoCfg := config.MongoDBConfig()
 	if mongoCfg != nil {
 		var err error
-		if localProvider, err = localProviders.NewMongoDB(mongoCfg.Hostname, mongoCfg.Port, mongoCfg.Username, mongoCfg.Password); err != nil {
+		if localProvider, err = mongod.NewMongoDB(mongoCfg.Hostname, mongoCfg.Port, mongoCfg.Username, mongoCfg.Password); err != nil {
+			log.Println(err)
 			panic(err)
 		}
 	}
@@ -40,9 +41,12 @@ func init() {
 	repository.AddProvider(&vekaptek.Vekaptek{})
 	repository.AddProvider(&disai.Disai{})
 
-	if config.ChromeDPWSAddress() != "" {
-		repository.AddProvider(nationalCatalog.New(config.ChromeDPWSAddress()))
-		repository.AddProvider(biostyle.New(config.ChromeDPWSAddress()))
+	if config.ChromeDPConfig() != nil {
+
+		chromeDPWSAddress := fmt.Sprintf("ws://%s:%d", config.ChromeDPConfig().Hostname, config.ChromeDPConfig().Port)
+
+		repository.AddProvider(nationalCatalog.New(chromeDPWSAddress))
+		repository.AddProvider(biostyle.New(chromeDPWSAddress))
 		//repository.AddProvider(&eapteka.Eapteka{})
 	}
 

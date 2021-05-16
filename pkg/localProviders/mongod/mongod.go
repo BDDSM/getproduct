@@ -1,11 +1,12 @@
-package localProviders
+package mongod
 
 import (
 	"context"
 	"fmt"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log"
 	"net/url"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/korableg/getproduct/pkg/product"
 	"go.mongodb.org/mongo-driver/bson"
@@ -56,10 +57,15 @@ func (m *MongoDB) initDB(colName string) error {
 
 	err = connect.Database(dbName).CreateCollection(ctx, colName)
 
-	if err != nil && err.(mongo.ServerError).HasErrorCode(48) {
-		return nil
-	} else if err != nil {
-		return err
+	if err != nil {
+		switch err.(type) {
+		case mongo.ServerError:
+			if err.(mongo.ServerError).HasErrorCode(48) {
+				return nil
+			}
+		default:
+			return err
+		}
 	}
 
 	unicue := true

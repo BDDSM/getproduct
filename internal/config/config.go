@@ -2,12 +2,10 @@ package config
 
 import (
 	"fmt"
+	"github.com/joho/godotenv"
 	"log"
 	"os"
 	"strconv"
-	"strings"
-
-	"github.com/joho/godotenv"
 )
 
 var instance *configData
@@ -19,12 +17,17 @@ type mongoDBConfig struct {
 	Password string
 }
 
+type chromeDPConfig struct {
+	Hostname string
+	Port     int
+}
+
 type configData struct {
-	mongoDBConfig     *mongoDBConfig
-	address           string
-	port              uint
-	debug             bool
-	chromedpWsAddress string
+	mongoDBConfig  *mongoDBConfig
+	chromeDPConfig *chromeDPConfig
+	address        string
+	port           uint
+	debug          bool
 }
 
 func init() {
@@ -42,21 +45,25 @@ func init() {
 	}
 
 	instance = &configData{
-		address:           getEnv("ADDRESS", "0.0.0.0"),
-		port:              getEnvAsUInt("PORT", 1218),
-		debug:             getEnvAsBool("DEBUG", false),
-		chromedpWsAddress: getEnv("CHROMEDP_WS_ADDRESS", ""),
+		address: getEnv("ADDRESS", "0.0.0.0"),
+		port:    getEnvAsUInt("PORT", 11218),
+		debug:   getEnvAsBool("DEBUG", false),
 	}
 
-	if instance.chromedpWsAddress != "" && !strings.HasPrefix(instance.chromedpWsAddress, "ws://") {
-		instance.chromedpWsAddress = "ws://" + instance.chromedpWsAddress
+	useChromeDP := getEnvAsBool("CHROMEDP_USE", false)
+	if useChromeDP {
+		chCfg := chromeDPConfig{
+			Hostname: getEnv("CHROMEDP_HOSTNAME", ""),
+			Port:     getEnvAsInt("CHROMEDP_PORT", 0),
+		}
+		instance.chromeDPConfig = &chCfg
 	}
 
 	useMongoDB := getEnvAsBool("MONGODB_USE", false)
 	if useMongoDB {
 		mc := mongoDBConfig{
 			Hostname: getEnv("MONGODB_HOSTNAME", ""),
-			Port:     int(getEnvAsUInt("MONGODB_PORT", 0)),
+			Port:     getEnvAsInt("MONGODB_PORT", 0),
 			Username: getEnv("MONGODB_USERNAME", ""),
 			Password: getEnv("MONGODB_PASSWORD", ""),
 		}
@@ -77,8 +84,8 @@ func Debug() bool {
 	return instance.debug
 }
 
-func ChromeDPWSAddress() string {
-	return instance.chromedpWsAddress
+func ChromeDPConfig() *chromeDPConfig {
+	return instance.chromeDPConfig
 }
 
 func MongoDBConfig() *mongoDBConfig {
@@ -101,6 +108,15 @@ func getEnvAsUInt(name string, defaultVal uint) uint {
 	valueStr := getEnv(name, "")
 	if value, err := strconv.Atoi(valueStr); err == nil {
 		return uint(value)
+	}
+
+	return defaultVal
+}
+
+func getEnvAsInt(name string, defaultVal int) int {
+	valueStr := getEnv(name, "")
+	if value, err := strconv.Atoi(valueStr); err == nil {
+		return value
 	}
 
 	return defaultVal

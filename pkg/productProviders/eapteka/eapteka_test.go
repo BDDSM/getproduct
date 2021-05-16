@@ -6,6 +6,8 @@ import (
 	"testing"
 )
 
+const chromedpWSAddress = "ws://localhost:3000"
+
 func TestEapteka(t *testing.T) {
 
 	const barcode_ksila = "8718692823822"
@@ -14,7 +16,7 @@ func TestEapteka(t *testing.T) {
 
 	ctx := context.Background()
 
-	bl := &Eapteka{}
+	bl := New(chromedpWSAddress)
 
 	pr, err := bl.GetProduct(ctx, barcode_ksila)
 	if err != nil {

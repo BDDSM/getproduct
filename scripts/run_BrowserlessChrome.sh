@@ -1,0 +1,1 @@
+docker run -d --network-alias chromedp --net getproduct-network --name chromedp browserless/chrome
