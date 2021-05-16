@@ -1,1 +1,1 @@
-docker build -t titovcode:GetProduct -f ../deploy/Dockerfile ../
+docker build -t korableg:getproduct -f ../deploy/Dockerfile ../
