@@ -1,2 +1,4 @@
 # Get Product
-Service which get products by barcode
+Web-scraping сервис, который позволяет получать товар по штрихкоду
+
+
