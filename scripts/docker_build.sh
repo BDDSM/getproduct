@@ -1,1 +1,1 @@
-docker build -t korableg:getproduct -f ../deploy/Dockerfile ../
+docker build -t korableg/getproduct:1.0.0.1 -f ../deploy/Dockerfile ../

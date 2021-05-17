@@ -36,6 +36,12 @@ Web-scraping сервис, который позволяет получать т
 * vekaptek.ru
 
 ## Развертывание сервиса
+
+Docker Pull Command: docker pull korableg/getproduct
+
+Страница репозитория на Docker Hub: https://hub.docker.com/r/korableg/getproduct
+
+### Также можно собрать образ самостоятельно
 В каталоге scripts расположены shell скрипты для сборки и запуска docker контейнера с сервисом. Также в данном каталоге есть пример с файлом .env.
 Рекомендуется запускать сервис вместе с контейнерами browserless/chrome и mongodb.
 
