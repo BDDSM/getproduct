@@ -37,12 +37,17 @@ Web-scraping сервис, который позволяет получать т
 
 ## Развертывание сервиса
 
-Docker Pull Command: docker pull korableg/getproduct
+Перед развертыванием необходимо изучить используемые переменные окружения (./scripts/example.env)
+
+### Команда для запуска
+```shell
+docker run -d --name getproduct -p 11218:11218 --net getproduct-network --env-file ./scripts/example.env korableg/getproduct
+```
 
 Страница репозитория на Docker Hub: https://hub.docker.com/r/korableg/getproduct
 
 ### Также можно собрать образ самостоятельно
-В каталоге scripts расположены shell скрипты для сборки и запуска docker контейнера с сервисом. Также в данном каталоге есть пример с файлом .env.
+В каталоге scripts расположены shell скрипты для сборки и запуска docker контейнера с сервисом.
 Рекомендуется запускать сервис вместе с контейнерами browserless/chrome и mongodb.
 
 browserless/chrome - позволяет рендерить на клиенте html страницу (если она полностью написана на js), рекомендуется использовать, т.к. с ним результат запроса будет лучше
