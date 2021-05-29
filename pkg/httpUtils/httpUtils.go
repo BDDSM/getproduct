@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
-	"github.com/chromedp/chromedp"
 	"net/http"
 	"net/http/cookiejar"
 	url2 "net/url"
 	"strings"
+
+	"github.com/PuerkitoBio/goquery"
+	"github.com/chromedp/chromedp"
 )
 
 func Get(ctx context.Context, url string) (*http.Response, error) {

@@ -2,10 +2,11 @@ package config
 
 import (
 	"fmt"
-	"github.com/joho/godotenv"
 	"log"
 	"os"
 	"strconv"
+
+	"github.com/joho/godotenv"
 )
 
 var instance *configData
@@ -93,7 +94,7 @@ func MongoDBConfig() *mongoDBConfig {
 }
 
 func Version() string {
-	return "1.0.0.1"
+	return "1.0.1.2"
 }
 
 func getEnv(key string, defaultVal string) string {

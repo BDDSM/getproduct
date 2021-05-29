@@ -62,8 +62,11 @@ func init() {
 	engine.NoRoute(pageNotFound)
 	engine.NoMethod(methodNotAllowed)
 
-	engine.GET("/api/barcode/:barcode", getProduct)
-	engine.GET("/api/thebestproduct/:barcode", getTheBestProduct)
+	group := engine.Group("/api/barcode")
+
+	group.GET("/first/:barcode", getProduct)
+	group.GET("/thebest/:barcode", getTheBestProduct)
+	group.GET("/all/:barcode", getAllProducts)
 
 	engine.DELETE("/api/localstorage/:barcode", deleteProductFromLocalRepository)
 
@@ -110,6 +113,19 @@ func getTheBestProduct(c *gin.Context) {
 	barcode := c.Params.ByName("barcode")
 
 	p, err := repository.GetTheBest(c, barcode)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, errs.New(err))
+		return
+	}
+
+	c.JSON(http.StatusOK, p)
+}
+
+func getAllProducts(c *gin.Context) {
+	barcode := c.Params.ByName("barcode")
+
+	p, err := repository.GetAll(c, barcode)
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, errs.New(err))

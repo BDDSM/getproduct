@@ -6,5 +6,6 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o main .
 FROM scratch
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /src/cmd/main /usr/bin/
+EXPOSE 11218
 WORKDIR /src/cmd
 CMD ["main"]
