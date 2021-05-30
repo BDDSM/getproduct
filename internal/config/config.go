@@ -94,7 +94,7 @@ func MongoDBConfig() *mongoDBConfig {
 }
 
 func Version() string {
-	return "1.0.1.3"
+	return "1.0.1.4"
 }
 
 func getEnv(key string, defaultVal string) string {
