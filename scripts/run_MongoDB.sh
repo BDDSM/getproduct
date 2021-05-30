@@ -1,1 +1,1 @@
-docker run -d --network-alias mongodb --net getproduct-network --name mongodb -p 27017:27017 -v /var/mongodata:/data/db mongo
+docker run -d --network-alias mongodb --net getproduct --name mongodb -p 27017:27017 -v /var/mongodata:/data/db mongo
