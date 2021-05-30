@@ -41,6 +41,13 @@ func (pr *ProductRepository) Get(ctx context.Context, barcode string) (*product.
 		return nil, errors.New("barcode hasn't filled")
 	}
 
+	if pr.localProvider != nil {
+		p, _ := pr.localProvider.GetProduct(ctx, barcode)
+		if p != nil {
+			return p, nil
+		}
+	}
+
 	pr.muProviders.RLock()
 	defer pr.muProviders.RUnlock()
 
@@ -55,9 +62,8 @@ func (pr *ProductRepository) Get(ctx context.Context, barcode string) (*product.
 	defer cancelFunc()
 
 	productChan := make(chan *product.Product)
-	fetchingDoneChan := make(chan struct{})
 
-	pr.getProductWithProviders(newCtx, barcode, productChan, fetchingDoneChan)
+	pr.getProductWithProviders(newCtx, barcode, productChan)
 
 	select {
 	case dst, ok := <-productChan:
@@ -66,8 +72,6 @@ func (pr *ProductRepository) Get(ctx context.Context, barcode string) (*product.
 		} else {
 			return nil, fmt.Errorf("product by barcode %s not found", barcode)
 		}
-	case <-fetchingDoneChan:
-		return nil, fmt.Errorf("product by barcode %s not found", barcode)
 	case <-newCtx.Done():
 		return nil, newCtx.Err()
 	}
@@ -103,9 +107,7 @@ func (pr *ProductRepository) GetTheBest(ctx context.Context, barcode string) (*p
 	products := make([]*product.Product, 0, len(pr.providers))
 	productChan := make(chan *product.Product)
 
-	fetchingDoneChan := make(chan struct{})
-
-	pr.getProductWithProviders(newCtx, barcode, productChan, fetchingDoneChan)
+	pr.getProductWithProviders(newCtx, barcode, productChan)
 
 	for {
 		select {
@@ -156,9 +158,7 @@ func (pr *ProductRepository) GetAll(ctx context.Context, barcode string) ([]*pro
 	products := make([]*product.Product, 0, len(pr.providers))
 	productChan := make(chan *product.Product)
 
-	fetchingDoneChan := make(chan struct{})
-
-	pr.getProductWithProviders(newCtx, barcode, productChan, fetchingDoneChan)
+	pr.getProductWithProviders(newCtx, barcode, productChan)
 
 	for {
 		select {
@@ -199,7 +199,7 @@ func (pr *ProductRepository) DeleteFromLocalProvider(ctx context.Context, barcod
 }
 
 func (pr *ProductRepository) getProductWithProviders(
-	ctx context.Context, barcode string, productChan chan<- *product.Product, fetchingDoneChan chan<- struct{}) {
+	ctx context.Context, barcode string, productChan chan<- *product.Product) {
 
 	wg := &sync.WaitGroup{}
 	wg.Add(len(pr.providers))
@@ -221,7 +221,6 @@ func (pr *ProductRepository) getProductWithProviders(
 
 	go func() {
 		wg.Wait()
-		fetchingDoneChan <- struct{}{}
 		close(productChan)
 	}()
 
