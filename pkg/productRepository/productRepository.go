@@ -36,6 +36,11 @@ func (pr *ProductRepository) AddProvider(provider productProvider.ProductProvide
 }
 
 func (pr *ProductRepository) Get(ctx context.Context, barcode string) (*product.Product, error) {
+
+	if barcode == "" {
+		return nil, errors.New("barcode hasn't filled")
+	}
+
 	pr.muProviders.RLock()
 	defer pr.muProviders.RUnlock()
 
@@ -70,6 +75,10 @@ func (pr *ProductRepository) Get(ctx context.Context, barcode string) (*product.
 }
 
 func (pr *ProductRepository) GetTheBest(ctx context.Context, barcode string) (*product.Product, error) {
+
+	if barcode == "" {
+		return nil, errors.New("barcode hasn't filled")
+	}
 
 	if pr.localProvider != nil {
 		p, _ := pr.localProvider.GetProduct(ctx, barcode)
@@ -126,6 +135,10 @@ func (pr *ProductRepository) GetTheBest(ctx context.Context, barcode string) (*p
 }
 
 func (pr *ProductRepository) GetAll(ctx context.Context, barcode string) ([]*product.Product, error) {
+
+	if barcode == "" {
+		return nil, errors.New("barcode hasn't filled")
+	}
 
 	pr.muProviders.RLock()
 	defer pr.muProviders.RUnlock()
@@ -191,12 +204,6 @@ func (pr *ProductRepository) getProductWithProviders(
 	wg := &sync.WaitGroup{}
 	wg.Add(len(pr.providers))
 
-	go func() {
-		wg.Wait()
-		fetchingDoneChan <- struct{}{}
-		close(productChan)
-	}()
-
 	for _, provider := range pr.providers {
 		go func(provider productProvider.ProductProvider, wg *sync.WaitGroup) {
 			p, err := provider.GetProduct(ctx, barcode)
@@ -211,6 +218,12 @@ func (pr *ProductRepository) getProductWithProviders(
 
 		}(provider, wg)
 	}
+
+	go func() {
+		wg.Wait()
+		fetchingDoneChan <- struct{}{}
+		close(productChan)
+	}()
 
 }
 
