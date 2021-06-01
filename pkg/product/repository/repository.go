@@ -1,4 +1,4 @@
-package productRepository
+package repository
 
 import (
 	"context"
@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/korableg/getproduct/pkg/product"
-	"github.com/korableg/getproduct/pkg/productLocalProvider"
-	"github.com/korableg/getproduct/pkg/productProvider"
+	productLocalProvider "github.com/korableg/getproduct/pkg/product/localprovider"
+	productProvider "github.com/korableg/getproduct/pkg/product/provider"
 )
 
 type ProductRepository struct {

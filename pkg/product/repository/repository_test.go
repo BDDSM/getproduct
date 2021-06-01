@@ -1,9 +1,10 @@
-package productRepository
+package repository
 
 import (
 	"context"
-	"github.com/korableg/getproduct/pkg/productProviders/barcodeList"
 	"testing"
+
+	"github.com/korableg/getproduct/pkg/productProviders/barcodeList"
 )
 
 func TestProductRepository(t *testing.T) {

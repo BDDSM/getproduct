@@ -9,14 +9,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/korableg/getproduct/internal/config"
 	"github.com/korableg/getproduct/internal/errs"
-	"github.com/korableg/getproduct/pkg/localProviders/mongod"
-	"github.com/korableg/getproduct/pkg/productLocalProvider"
-	"github.com/korableg/getproduct/pkg/productProviders/barcodeList"
-	"github.com/korableg/getproduct/pkg/productProviders/biostyle"
-	"github.com/korableg/getproduct/pkg/productProviders/disai"
-	"github.com/korableg/getproduct/pkg/productProviders/nationalCatalog"
-	"github.com/korableg/getproduct/pkg/productProviders/vekaptek"
-	"github.com/korableg/getproduct/pkg/productRepository"
+	productLocalProvider "github.com/korableg/getproduct/pkg/product/localprovider"
+	"github.com/korableg/getproduct/pkg/product/localprovider/mongod"
+	"github.com/korableg/getproduct/pkg/product/provider/barcodeList"
+	"github.com/korableg/getproduct/pkg/product/provider/biostyle"
+	"github.com/korableg/getproduct/pkg/product/provider/disai"
+	"github.com/korableg/getproduct/pkg/product/provider/nationalCatalog"
+	"github.com/korableg/getproduct/pkg/product/provider/vekaptek"
+	productRepository "github.com/korableg/getproduct/pkg/product/repository"
 )
 
 var engine *gin.Engine

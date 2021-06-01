@@ -1,8 +1,9 @@
-package productProvider
+package provider
 
 import (
 	"context"
 	"errors"
+
 	"github.com/korableg/getproduct/pkg/product"
 )
 

@@ -1,4 +1,4 @@
-package productProvider
+package provider
 
 import (
 	"context"

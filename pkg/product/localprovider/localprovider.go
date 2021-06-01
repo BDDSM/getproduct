@@ -1,9 +1,10 @@
-package productLocalProvider
+package localprovider
 
 import (
 	"context"
+
 	"github.com/korableg/getproduct/pkg/product"
-	"github.com/korableg/getproduct/pkg/productProvider"
+	productProvider "github.com/korableg/getproduct/pkg/product/provider"
 )
 
 type ProductLocalProvider interface {
