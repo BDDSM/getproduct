@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/korableg/getproduct/pkg/productProviders/barcodeList"
+	"github.com/korableg/getproduct/pkg/product/provider/barcodeList"
 )
 
 func TestProductRepository(t *testing.T) {
