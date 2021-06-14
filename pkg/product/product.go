@@ -7,16 +7,28 @@ import (
 	"strings"
 )
 
+// Product model
+// swagger:model product
 type Product struct {
-	barcode      string
-	article      string
-	name         string
-	description  string
+	// Barcode of product
+	// required: true
+	barcode string
+	// Article of product
+	article string
+	// Name of product
+	name string
+	// Description of product
+	description string
+	// Manufacturer of product
 	manufacturer string
-	unit         string
-	weight       float64
-	url          string
-	picture      []byte
+	// Unit of product
+	unit string
+	// Weight of 1 unit product
+	weight float64
+	// Url where was found this product
+	url string
+	// Picture of product
+	picture []byte
 }
 
 func New(barcode string, url string) *Product {

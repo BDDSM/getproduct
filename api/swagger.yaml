@@ -1,0 +1,89 @@
+basePath: /api
+definitions:
+  error:
+    description: Error model
+    type: object
+    x-go-name: Error
+    x-go-package: github.com/korableg/getproduct/pkg/errs
+  product:
+    description: Product model
+    properties:
+      LastName:
+        description: Lastname of product
+        type: string
+    type: object
+    x-go-name: Product
+    x-go-package: github.com/korableg/getproduct/pkg/product
+info:
+  description: Documentanion for Product API
+  title: of GetProduct API
+  version: 1.0.1.4
+paths:
+  /api/barcode/all/:barcode:
+    get:
+      description: Returns all found variants of product by barcode
+      operationId: allProduct
+      responses:
+        "200":
+          description: product
+          schema:
+            items:
+              $ref: '#/definitions/product'
+            type: array
+        "400":
+          description: error
+          schema:
+            $ref: '#/definitions/error'
+      tags:
+      - product
+  /api/barcode/first/:barcode:
+    get:
+      description: Returns first found product by barcode
+      operationId: firstProduct
+      responses:
+        "200":
+          description: product
+          schema:
+            $ref: '#/definitions/product'
+        "400":
+          description: error
+          schema:
+            $ref: '#/definitions/error'
+      tags:
+      - product
+  /api/barcode/thebest/:barcode:
+    get:
+      description: Returns the best found product by barcode
+      operationId: theBestProduct
+      responses:
+        "200":
+          description: product
+          schema:
+            $ref: '#/definitions/product'
+        "400":
+          description: error
+          schema:
+            $ref: '#/definitions/error'
+      tags:
+      - product
+  /api/localstorage/:barcode:
+    delete:
+      description: Deletes product by barcode from local storage
+      operationId: delete
+      responses:
+        "200":
+          $ref: '#/responses/noContent'
+        "400":
+          description: error
+          schema:
+            $ref: '#/definitions/error'
+      tags:
+      - product
+produces:
+- application/json
+responses:
+  noContent:
+    description: ""
+schemes:
+- http
+swagger: "2.0"

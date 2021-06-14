@@ -1,1 +1,1 @@
-docker run -d --network-alias chromedp --net getproduct --name chromedp browserless/chrome
+docker run -d -e "DEFAULT_HEADLESS=true" -p 3000:3000 --network-alias chromedp --net getproduct --name chromedp browserless/chrome

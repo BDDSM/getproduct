@@ -2,7 +2,10 @@ package errs
 
 import "encoding/json"
 
+// Error model
+// swagger:model error
 type Error struct {
+	// Description of error
 	error string
 }
 

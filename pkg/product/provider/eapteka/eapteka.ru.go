@@ -3,6 +3,7 @@ package eapteka
 import (
 	"bytes"
 	"context"
+	"io/ioutil"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/korableg/getproduct/pkg/httpUtils"
@@ -32,6 +33,8 @@ func (e *Eapteka) GetProduct(ctx context.Context, barcode string) (*product.Prod
 		return nil, err
 	}
 
+	ioutil.WriteFile("./tmp.html", body, 0644)
+
 	reader := bytes.NewReader(body)
 
 	doc, err := goquery.NewDocumentFromReader(reader)
@@ -48,7 +51,7 @@ func (e *Eapteka) GetProduct(ctx context.Context, barcode string) (*product.Prod
 }
 
 func (e *Eapteka) getName(doc *goquery.Document) (name string) {
-	doc.Find("div[itemtype=\"http://schema.org/Product\"] h1").EachWithBreak(func(parentIndex int, s *goquery.Selection) bool {
+	doc.Find(`div[itemtype="http://schema.org/Product"] h1`).EachWithBreak(func(parentIndex int, s *goquery.Selection) bool {
 		name = s.Text()
 		return false
 	})

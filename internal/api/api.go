@@ -1,3 +1,14 @@
+// Package classification of GetProduct API
+//
+// Documentanion for Product API
+//
+//  Schemes: http
+//  BasePath: /api
+//  Version: 1.0.1.4
+//
+//  Produces:
+//  - application/json
+// swagger:meta
 package api
 
 import (
@@ -8,7 +19,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/korableg/getproduct/internal/config"
-	"github.com/korableg/getproduct/internal/errs"
+	"github.com/korableg/getproduct/pkg/errs"
 	productLocalProvider "github.com/korableg/getproduct/pkg/product/localprovider"
 	"github.com/korableg/getproduct/pkg/product/localprovider/mongod"
 	"github.com/korableg/getproduct/pkg/product/provider/barcodeList"
@@ -21,6 +32,10 @@ import (
 
 var engine *gin.Engine
 var repository *productRepository.ProductRepository
+
+// swagger:response noContent
+type noContent struct {
+}
 
 func init() {
 
@@ -57,12 +72,13 @@ func init() {
 	}
 
 	engine = gin.New()
-	engine.Use(defaultHeaders())
+	engine.Use(defaultHeaders)
 
 	engine.NoRoute(pageNotFound)
 	engine.NoMethod(methodNotAllowed)
 
 	group := engine.Group("/api/barcode")
+	group.Use(validateRequest)
 
 	group.GET("/first/:barcode", getProduct)
 	group.GET("/thebest/:barcode", getTheBestProduct)
@@ -82,9 +98,15 @@ func Run() {
 	}()
 }
 
-func defaultHeaders() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Header("Server", fmt.Sprintf("GetProduct:%s", config.Version()))
+func defaultHeaders(c *gin.Context) {
+	c.Next()
+	c.Header("Server", fmt.Sprintf("GetProduct:%s", config.Version()))
+}
+
+func validateRequest(c *gin.Context) {
+	barcode := c.Params.ByName("barcode")
+	if barcode == "" {
+		c.AbortWithStatusJSON(http.StatusBadRequest, errs.New(errors.New("barcode hasn't filled")))
 	}
 }
 
@@ -96,6 +118,11 @@ func methodNotAllowed(c *gin.Context) {
 	c.JSON(http.StatusMethodNotAllowed, errs.New(errors.New("method is not allowed")))
 }
 
+// swagger:route GET /api/barcode/first/:barcode product firstProduct
+// Returns first found product by barcode
+// responses:
+//  200: product
+//  400: error
 func getProduct(c *gin.Context) {
 	barcode := c.Params.ByName("barcode")
 
@@ -109,6 +136,11 @@ func getProduct(c *gin.Context) {
 	c.JSON(http.StatusOK, p)
 }
 
+// swagger:route GET /api/barcode/thebest/:barcode product theBestProduct
+// Returns the best found product by barcode
+// responses:
+//  200: product
+//  400: error
 func getTheBestProduct(c *gin.Context) {
 	barcode := c.Params.ByName("barcode")
 
@@ -122,6 +154,11 @@ func getTheBestProduct(c *gin.Context) {
 	c.JSON(http.StatusOK, p)
 }
 
+// swagger:route GET /api/barcode/all/:barcode product allProduct
+// Returns all found variants of product by barcode
+// responses:
+//  200: []product
+//  400: error
 func getAllProducts(c *gin.Context) {
 	barcode := c.Params.ByName("barcode")
 
@@ -135,6 +172,11 @@ func getAllProducts(c *gin.Context) {
 	c.JSON(http.StatusOK, p)
 }
 
+// swagger:route DELETE /api/localstorage/:barcode product delete
+// Deletes product by barcode from local storage
+// responses:
+//  200: noContent
+//  400: error
 func deleteProductFromLocalRepository(c *gin.Context) {
 	barcode := c.Params.ByName("barcode")
 
