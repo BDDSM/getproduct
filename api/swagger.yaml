@@ -7,10 +7,6 @@ definitions:
     x-go-package: github.com/korableg/getproduct/pkg/errs
   product:
     description: Product model
-    properties:
-      LastName:
-        description: Lastname of product
-        type: string
     type: object
     x-go-name: Product
     x-go-package: github.com/korableg/getproduct/pkg/product
