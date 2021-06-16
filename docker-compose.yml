@@ -1,0 +1,39 @@
+version: '3'
+services: 
+    getproduct:
+        build: .
+        container_name: 'getproduct'
+        ports: 
+            - 11218:11218
+        depends_on: 
+            - 'db'
+            - 'chromedp'
+        networks:
+            - 'getproduct'
+        env_file:
+            - ./examples/example.env
+        restart: on-failure
+    chromedp:
+        image: 'browserless/chrome'
+        container_name: 'chromedp'
+        environment: 
+            DEFAULT_HEADLESS: 'false'
+        networks:
+            - 'getproduct'
+        restart: on-failure
+    db:
+        image: 'mongo'
+        container_name: 'mongodb'
+        ports: 
+            - 27017:27017
+        networks:
+            - 'getproduct'
+        restart: on-failure
+        volumes:
+            - mongodb:/data/db
+
+networks:
+    getproduct:
+
+volumes:
+    mongodb:
