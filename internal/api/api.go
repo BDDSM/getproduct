@@ -18,15 +18,9 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/korableg/getproduct/internal/config"
 	"github.com/korableg/getproduct/pkg/errs"
-	productLocalProvider "github.com/korableg/getproduct/pkg/product/localprovider"
-	"github.com/korableg/getproduct/pkg/product/localprovider/mongod"
-	"github.com/korableg/getproduct/pkg/product/provider/barcodeList"
-	"github.com/korableg/getproduct/pkg/product/provider/biostyle"
-	"github.com/korableg/getproduct/pkg/product/provider/disai"
-	"github.com/korableg/getproduct/pkg/product/provider/nationalCatalog"
-	"github.com/korableg/getproduct/pkg/product/provider/vekaptek"
+	lp "github.com/korableg/getproduct/pkg/product/localprovider"
+	pp "github.com/korableg/getproduct/pkg/product/provider"
 	productRepository "github.com/korableg/getproduct/pkg/product/repository"
 )
 
@@ -39,37 +33,20 @@ type noContent struct {
 
 func init() {
 
-	var localProvider productLocalProvider.ProductLocalProvider
+	repository = productRepository.New(nil)
+	// repository.AddProvider(&barcodeList.BarcodeList{})
 
-	mongoCfg := config.MongoDBConfig()
-	if mongoCfg != nil {
-		var err error
-		if localProvider, err = mongod.NewMongoDB(mongoCfg.Hostname, mongoCfg.Port, mongoCfg.Username, mongoCfg.Password); err != nil {
-			log.Println(err)
-			panic(err)
-		}
-	}
+	// repository.AddProvider(&vekaptek.Vekaptek{})
+	// repository.AddProvider(&disai.Disai{})
 
-	repository = productRepository.New(localProvider)
-	repository.AddProvider(&barcodeList.BarcodeList{})
+	// if config.ChromeDPConfig() != nil {
 
-	repository.AddProvider(&vekaptek.Vekaptek{})
-	repository.AddProvider(&disai.Disai{})
+	// 	chromeDPWSAddress := fmt.Sprintf("ws://%s:%d", config.ChromeDPConfig().Hostname, config.ChromeDPConfig().Port)
 
-	if config.ChromeDPConfig() != nil {
-
-		chromeDPWSAddress := fmt.Sprintf("ws://%s:%d", config.ChromeDPConfig().Hostname, config.ChromeDPConfig().Port)
-
-		repository.AddProvider(nationalCatalog.New(chromeDPWSAddress))
-		repository.AddProvider(biostyle.New(chromeDPWSAddress))
-		//repository.AddProvider(&eapteka.Eapteka{})
-	}
-
-	if config.Debug() {
-		gin.SetMode(gin.DebugMode)
-	} else {
-		gin.SetMode(gin.ReleaseMode)
-	}
+	// 	repository.AddProvider(nationalCatalog.New(chromeDPWSAddress))
+	// 	repository.AddProvider(biostyle.New(chromeDPWSAddress))
+	// 	//repository.AddProvider(&eapteka.Eapteka{})
+	// }
 
 	engine = gin.New()
 	engine.Use(defaultHeaders)
@@ -88,19 +65,21 @@ func init() {
 
 }
 
-func Run() {
-	go func() {
-		address := fmt.Sprintf("%s:%d", config.Address(), config.Port())
-		err := engine.Run(address)
-		if err != nil && err != http.ErrServerClosed {
-			panic(err)
-		}
-	}()
+func Engine() *gin.Engine {
+	return engine
+}
+
+func SetLocalProvider(lp lp.ProductLocalProvider) {
+	repository.SetLocalProvider(lp)
+}
+
+func AddProvider(provider pp.ProductProvider) {
+	repository.AddProvider(provider)
 }
 
 func defaultHeaders(c *gin.Context) {
 	c.Next()
-	c.Header("Server", fmt.Sprintf("GetProduct:%s", config.Version()))
+	c.Header("Server", fmt.Sprintf("GetProduct:%s", "1.0.1.4"))
 }
 
 func validateRequest(c *gin.Context) {

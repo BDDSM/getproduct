@@ -1,26 +1,59 @@
 package main
 
 import (
+	"fmt"
+
+	httpServer "github.com/asim/go-micro/plugins/server/http/v3"
+	"github.com/asim/go-micro/v3"
+	"github.com/asim/go-micro/v3/config"
+	"github.com/asim/go-micro/v3/config/source/env"
+	"github.com/asim/go-micro/v3/logger"
+	"github.com/asim/go-micro/v3/registry"
+	"github.com/asim/go-micro/v3/server"
+	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"github.com/korableg/getproduct/internal/api"
-	"log"
-	"os"
-	"os/signal"
-	"syscall"
 )
+
+const nameApp = "getproduct"
+
+func init() {
+	godotenv.Load()
+	config.Load(
+		env.NewSource(
+			env.WithStrippedPrefix("getproduct"),
+		),
+	)
+}
 
 func main() {
 
-	log.Println("Starting GetProduct...")
+	if config.Get("debug").Bool(false) {
+		logger.Init(logger.WithLevel(logger.DebugLevel))
+		gin.SetMode(gin.DebugMode)
+	} else {
+		gin.SetMode(gin.ReleaseMode)
+	}
 
-	api.Run()
+	address := fmt.Sprintf("%s:%d", config.Get("address").String(""), config.Get("port").Int(11218))
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	srv := httpServer.NewServer(
+		server.Name(nameApp),
+		server.Address(address),
+	)
 
-	log.Println("GetProduct has started")
+	hd := srv.NewHandler(api.Engine())
+	if err := srv.Handle(hd); err != nil {
+		logger.Fatal(err)
+	}
 
-	<-quit
+	service := micro.NewService(
+		micro.Name(nameApp),
+		micro.Server(srv),
+		micro.Registry(registry.NewRegistry()),
+	)
 
-	log.Println("Shutdown GetProduct...")
+	service.Init()
+	service.Run()
 
 }

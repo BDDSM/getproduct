@@ -26,6 +26,7 @@ type Product struct {
 	// Weight of 1 unit product
 	weight float64
 	// Url where was found this product
+	// required: true
 	url string
 	// Picture of product
 	picture []byte

@@ -4,8 +4,10 @@ go 1.16
 
 require (
 	github.com/PuerkitoBio/goquery v1.6.1
+	github.com/asim/go-micro/plugins/server/http/v3 v3.0.0-20210617101138-08216ccf3148
+	github.com/asim/go-micro/v3 v3.5.1
 	github.com/chromedp/chromedp v0.7.2
-	github.com/gin-gonic/gin v1.7.1
+	github.com/gin-gonic/gin v1.7.2
 	github.com/grokify/html-strip-tags-go v0.0.1
 	github.com/joho/godotenv v1.3.0
 	go.mongodb.org/mongo-driver v1.5.2

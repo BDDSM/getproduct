@@ -29,6 +29,12 @@ func New(localProvider productLocalProvider.ProductLocalProvider) *ProductReposi
 	return &pr
 }
 
+func (pr *ProductRepository) SetLocalProvider(provider productLocalProvider.ProductLocalProvider) {
+	pr.muProviders.Lock()
+	defer pr.muProviders.Unlock()
+	pr.localProvider = provider
+}
+
 func (pr *ProductRepository) AddProvider(provider productProvider.ProductProvider) {
 	pr.muProviders.Lock()
 	defer pr.muProviders.Unlock()
@@ -41,15 +47,15 @@ func (pr *ProductRepository) Get(ctx context.Context, barcode string) (*product.
 		return nil, errors.New("barcode hasn't filled")
 	}
 
+	pr.muProviders.RLock()
+	defer pr.muProviders.RUnlock()
+
 	if pr.localProvider != nil {
 		p, _ := pr.localProvider.GetProduct(ctx, barcode)
 		if p != nil {
 			return p, nil
 		}
 	}
-
-	pr.muProviders.RLock()
-	defer pr.muProviders.RUnlock()
 
 	err := pr.checkProviders()
 	if err != nil {
@@ -84,15 +90,15 @@ func (pr *ProductRepository) GetTheBest(ctx context.Context, barcode string) (*p
 		return nil, errors.New("barcode hasn't filled")
 	}
 
+	pr.muProviders.RLock()
+	defer pr.muProviders.RUnlock()
+
 	if pr.localProvider != nil {
 		p, _ := pr.localProvider.GetProduct(ctx, barcode)
 		if p != nil {
 			return p, nil
 		}
 	}
-
-	pr.muProviders.RLock()
-	defer pr.muProviders.RUnlock()
 
 	err := pr.checkProviders()
 	if err != nil {
