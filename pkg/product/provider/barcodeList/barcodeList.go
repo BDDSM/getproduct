@@ -4,16 +4,22 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
+
 	"github.com/PuerkitoBio/goquery"
 	"github.com/korableg/getproduct/pkg/httpUtils"
 	"github.com/korableg/getproduct/pkg/product"
-	"strconv"
-	"strings"
+	"github.com/korableg/getproduct/pkg/product/provider"
 )
 
 const endpointTemplate = "https://barcode-list.ru/barcode/RU/Поиск.htm?barcode=%s"
 
 type BarcodeList struct{}
+
+func init() {
+	provider.Register("barcodelist", &BarcodeList{})
+}
 
 func (b *BarcodeList) GetProduct(ctx context.Context, barcode string) (p *product.Product, err error) {
 

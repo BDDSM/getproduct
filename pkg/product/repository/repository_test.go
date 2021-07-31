@@ -4,18 +4,16 @@ import (
 	"context"
 	"testing"
 
-	"github.com/korableg/getproduct/pkg/product/provider/barcodeList"
+	_ "github.com/korableg/getproduct/pkg/product/provider/barcodeList"
 )
 
 func TestProductRepository(t *testing.T) {
 
-	pr := New(nil)
+	pr := New()
 	_, err := pr.Get(context.Background(), "fake")
 	if err == nil {
 		t.Errorf("error should be \"product providers is empty\"")
 	}
-
-	pr.AddProvider(&barcodeList.BarcodeList{})
 
 	_, err = pr.Get(context.Background(), "fake")
 	if err == nil {

@@ -4,14 +4,20 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
+
 	"github.com/PuerkitoBio/goquery"
 	"github.com/korableg/getproduct/pkg/httpUtils"
 	"github.com/korableg/getproduct/pkg/product"
+	"github.com/korableg/getproduct/pkg/product/provider"
 	"golang.org/x/net/html/charset"
-	"strings"
 )
 
 type Disai struct{}
+
+func init() {
+	provider.Register("disai", &Disai{})
+}
 
 func (d *Disai) GetProduct(ctx context.Context, barcode string) (p *product.Product, err error) {
 

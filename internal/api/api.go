@@ -19,21 +19,53 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/korableg/getproduct/pkg/errs"
-	lp "github.com/korableg/getproduct/pkg/product/localprovider"
-	pp "github.com/korableg/getproduct/pkg/product/provider"
 	productRepository "github.com/korableg/getproduct/pkg/product/repository"
 )
-
-var engine *gin.Engine
-var repository *productRepository.ProductRepository
 
 // swagger:response noContent
 type noContent struct {
 }
 
+type Engine struct {
+	engine     *gin.Engine
+	repository *productRepository.ProductRepository
+}
+
+func New(opts ...EngineOption) (*Engine, error) {
+
+	e := &Engine{}
+
+	engine := gin.New()
+	engine.Use(e.defaultHeaders)
+
+	engine.NoRoute(e.pageNotFound)
+	engine.NoMethod(e.methodNotAllowed)
+
+	group := engine.Group("/api/barcode")
+	group.Use(e.validateRequest)
+
+	group.GET("/first/:barcode", e.getProduct)
+	group.GET("/thebest/:barcode", e.getTheBestProduct)
+	group.GET("/all/:barcode", e.getAllProducts)
+
+	engine.DELETE("/api/localstorage/:barcode", e.deleteProductFromLocalRepository)
+
+	e.engine = engine
+
+	for _, opt := range opts {
+		opt(e)
+	}
+
+	if e.repository == nil {
+		return nil, errors.New("product repository didn't initialize")
+	}
+
+	return e, nil
+
+}
+
 func init() {
 
-	repository = productRepository.New(nil)
 	// repository.AddProvider(&barcodeList.BarcodeList{})
 
 	// repository.AddProvider(&vekaptek.Vekaptek{})
@@ -41,59 +73,34 @@ func init() {
 
 	// if config.ChromeDPConfig() != nil {
 
-	// 	chromeDPWSAddress := fmt.Sprintf("ws://%s:%d", config.ChromeDPConfig().Hostname, config.ChromeDPConfig().Port)
-
 	// 	repository.AddProvider(nationalCatalog.New(chromeDPWSAddress))
 	// 	repository.AddProvider(biostyle.New(chromeDPWSAddress))
 	// 	//repository.AddProvider(&eapteka.Eapteka{})
 	// }
 
-	engine = gin.New()
-	engine.Use(defaultHeaders)
-
-	engine.NoRoute(pageNotFound)
-	engine.NoMethod(methodNotAllowed)
-
-	group := engine.Group("/api/barcode")
-	group.Use(validateRequest)
-
-	group.GET("/first/:barcode", getProduct)
-	group.GET("/thebest/:barcode", getTheBestProduct)
-	group.GET("/all/:barcode", getAllProducts)
-
-	engine.DELETE("/api/localstorage/:barcode", deleteProductFromLocalRepository)
-
 }
 
-func Engine() *gin.Engine {
-	return engine
+func (e *Engine) Handler() *gin.Engine {
+	return e.engine
 }
 
-func SetLocalProvider(lp lp.ProductLocalProvider) {
-	repository.SetLocalProvider(lp)
-}
-
-func AddProvider(provider pp.ProductProvider) {
-	repository.AddProvider(provider)
-}
-
-func defaultHeaders(c *gin.Context) {
+func (e *Engine) defaultHeaders(c *gin.Context) {
 	c.Next()
-	c.Header("Server", fmt.Sprintf("GetProduct:%s", "1.0.1.4"))
+	c.Header("Server", fmt.Sprintf("GetProduct:%s", "1.0.2.1"))
 }
 
-func validateRequest(c *gin.Context) {
+func (e *Engine) validateRequest(c *gin.Context) {
 	barcode := c.Params.ByName("barcode")
 	if barcode == "" {
 		c.AbortWithStatusJSON(http.StatusBadRequest, errs.New(errors.New("barcode hasn't filled")))
 	}
 }
 
-func pageNotFound(c *gin.Context) {
+func (e *Engine) pageNotFound(c *gin.Context) {
 	c.JSON(http.StatusNotFound, errs.New(errors.New("not found")))
 }
 
-func methodNotAllowed(c *gin.Context) {
+func (e *Engine) methodNotAllowed(c *gin.Context) {
 	c.JSON(http.StatusMethodNotAllowed, errs.New(errors.New("method is not allowed")))
 }
 
@@ -102,10 +109,10 @@ func methodNotAllowed(c *gin.Context) {
 // responses:
 //  200: product
 //  400: error
-func getProduct(c *gin.Context) {
+func (e *Engine) getProduct(c *gin.Context) {
 	barcode := c.Params.ByName("barcode")
 
-	p, err := repository.Get(c, barcode)
+	p, err := e.repository.Get(c, barcode)
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, errs.New(err))
@@ -120,10 +127,10 @@ func getProduct(c *gin.Context) {
 // responses:
 //  200: product
 //  400: error
-func getTheBestProduct(c *gin.Context) {
+func (e *Engine) getTheBestProduct(c *gin.Context) {
 	barcode := c.Params.ByName("barcode")
 
-	p, err := repository.GetTheBest(c, barcode)
+	p, err := e.repository.GetTheBest(c, barcode)
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, errs.New(err))
@@ -138,10 +145,10 @@ func getTheBestProduct(c *gin.Context) {
 // responses:
 //  200: []product
 //  400: error
-func getAllProducts(c *gin.Context) {
+func (e *Engine) getAllProducts(c *gin.Context) {
 	barcode := c.Params.ByName("barcode")
 
-	p, err := repository.GetAll(c, barcode)
+	p, err := e.repository.GetAll(c, barcode)
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, errs.New(err))
@@ -156,10 +163,10 @@ func getAllProducts(c *gin.Context) {
 // responses:
 //  200: noContent
 //  400: error
-func deleteProductFromLocalRepository(c *gin.Context) {
+func (e *Engine) deleteProductFromLocalRepository(c *gin.Context) {
 	barcode := c.Params.ByName("barcode")
 
-	err := repository.DeleteFromLocalProvider(c, barcode)
+	err := e.repository.DeleteFromLocalProvider(c, barcode)
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, errs.New(err))

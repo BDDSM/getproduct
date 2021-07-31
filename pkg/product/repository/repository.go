@@ -14,31 +14,24 @@ import (
 )
 
 type ProductRepository struct {
-	providers     []productProvider.ProductProvider
-	localProvider productLocalProvider.ProductLocalProvider
-	muProviders   sync.RWMutex
+	providers         []productProvider.ProductProvider
+	localProvider     productLocalProvider.ProductLocalProvider
+	chromeDPWSAddress string
+	muProviders       sync.RWMutex
 }
 
-func New(localProvider productLocalProvider.ProductLocalProvider) *ProductRepository {
-	pr := ProductRepository{
-		providers:     make([]productProvider.ProductProvider, 0, 10),
-		localProvider: localProvider,
-		muProviders:   sync.RWMutex{},
+func New(opts ...ProductRepositoryOption) *ProductRepository {
+
+	pr := &ProductRepository{
+		providers:   make([]productProvider.ProductProvider, 0, 10),
+		muProviders: sync.RWMutex{},
 	}
 
-	return &pr
-}
+	for _, opt := range opts {
+		opt(pr)
+	}
 
-func (pr *ProductRepository) SetLocalProvider(provider productLocalProvider.ProductLocalProvider) {
-	pr.muProviders.Lock()
-	defer pr.muProviders.Unlock()
-	pr.localProvider = provider
-}
-
-func (pr *ProductRepository) AddProvider(provider productProvider.ProductProvider) {
-	pr.muProviders.Lock()
-	defer pr.muProviders.Unlock()
-	pr.providers = append(pr.providers, provider)
+	return pr
 }
 
 func (pr *ProductRepository) Get(ctx context.Context, barcode string) (*product.Product, error) {
@@ -207,12 +200,14 @@ func (pr *ProductRepository) DeleteFromLocalProvider(ctx context.Context, barcod
 func (pr *ProductRepository) getProductWithProviders(
 	ctx context.Context, barcode string, productChan chan<- *product.Product) {
 
+	newCtx := context.WithValue(ctx, "chromedpwsaddress", pr.chromeDPWSAddress)
+
 	wg := &sync.WaitGroup{}
 	wg.Add(len(pr.providers))
 
 	for _, provider := range pr.providers {
 		go func(provider productProvider.ProductProvider, wg *sync.WaitGroup) {
-			p, err := provider.GetProduct(ctx, barcode)
+			p, err := provider.GetProduct(newCtx, barcode)
 			defer wg.Done()
 			if err != nil {
 				log.Println(err)

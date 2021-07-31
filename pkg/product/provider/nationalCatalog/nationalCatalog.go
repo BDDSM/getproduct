@@ -4,28 +4,29 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
-	"github.com/korableg/getproduct/pkg/httpUtils"
-	"github.com/korableg/getproduct/pkg/product"
 	"io"
 	"log"
 	"strconv"
 	"strings"
+
+	"github.com/PuerkitoBio/goquery"
+	"github.com/korableg/getproduct/pkg/httpUtils"
+	"github.com/korableg/getproduct/pkg/product"
+	"github.com/korableg/getproduct/pkg/product/provider"
 )
 
-type NationalCatalog struct {
-	chromedpWsAddress string
-}
+type NationalCatalog struct{}
 
-func New(chromedpWsAddress string) *NationalCatalog {
-	nc := NationalCatalog{
-		chromedpWsAddress: chromedpWsAddress,
-	}
-
-	return &nc
+func init() {
+	provider.Register("nationalcatalog", &NationalCatalog{})
 }
 
 func (nc *NationalCatalog) GetProduct(ctx context.Context, barcode string) (p *product.Product, err error) {
+
+	chromeDPWSAddress := ctx.Value("chromedpwsaddress")
+	if chromeDPWSAddress == nil || chromeDPWSAddress.(string) == "" {
+		return nil, errors.New("национальный-каталог.рф: you should to use headless chrome")
+	}
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -34,7 +35,7 @@ func (nc *NationalCatalog) GetProduct(ctx context.Context, barcode string) (p *p
 	}()
 
 	url, err := httpUtils.GetUrlByYandex(
-		ctx, barcode, fmt.Sprintf("национальный-каталог.рф/product/%s", barcode), nc.chromedpWsAddress)
+		ctx, barcode, fmt.Sprintf("национальный-каталог.рф/product/%s", barcode), chromeDPWSAddress.(string))
 	if err != nil {
 		return nil, err
 	}

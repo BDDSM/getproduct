@@ -14,9 +14,9 @@ func TestBioStyle(t *testing.T) {
 	const ksila_name = "Ксила флак. 50 мл."
 	const barcode_fake = "fake"
 
-	ctx := context.Background()
+	ctx := context.WithValue(context.Background(), "chromedpwsaddress", "ws://localhost:3000")
 
-	bl := New("ws://localhost:3000")
+	bl := &BioStyle{}
 	pr, err := bl.GetProduct(ctx, barcode_karsulen)
 	if err != nil {
 		t.Fatal(err)

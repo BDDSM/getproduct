@@ -12,9 +12,9 @@ func TestNationalCatalog(t *testing.T) {
 	const name = "Сыр плавленый Hochland Бистро Чеддер, 344 г"
 	const barcode_fake = "fake"
 
-	ctx := context.Background()
+	ctx := context.WithValue(context.Background(), "chromedpwsaddress", "ws://localhost:3000")
 
-	bl := New("ws://localhost:3000")
+	bl := &NationalCatalog{}
 
 	pr, err := bl.GetProduct(ctx, barcode)
 	if err != nil {

@@ -4,18 +4,24 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
-	"github.com/korableg/getproduct/pkg/httpUtils"
-	"github.com/korableg/getproduct/pkg/product"
 	"log"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/PuerkitoBio/goquery"
+	"github.com/korableg/getproduct/pkg/httpUtils"
+	"github.com/korableg/getproduct/pkg/product"
+	"github.com/korableg/getproduct/pkg/product/provider"
 )
 
 //
 
 type Vekaptek struct{}
+
+func init() {
+	provider.Register("vekaptek", &Vekaptek{})
+}
 
 func (v *Vekaptek) GetProduct(ctx context.Context, barcode string) (p *product.Product, err error) {
 

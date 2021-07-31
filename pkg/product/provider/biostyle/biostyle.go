@@ -14,22 +14,21 @@ import (
 	strip "github.com/grokify/html-strip-tags-go"
 	"github.com/korableg/getproduct/pkg/httpUtils"
 	"github.com/korableg/getproduct/pkg/product"
+	"github.com/korableg/getproduct/pkg/product/provider"
 )
 
-type BioStyle struct {
-	chromeDPWSAddress string
-}
+type BioStyle struct{}
 
-func New(chromeDPWSAddress string) *BioStyle {
-	b := BioStyle{
-		chromeDPWSAddress: chromeDPWSAddress,
-	}
-
-	return &b
-
+func init() {
+	provider.Register("biostyle", &BioStyle{})
 }
 
 func (b *BioStyle) GetProduct(ctx context.Context, barcode string) (p *product.Product, err error) {
+
+	chromeDPWSAddress := ctx.Value("chromedpwsaddress")
+	if chromeDPWSAddress == nil || chromeDPWSAddress.(string) == "" {
+		return nil, errors.New("biostyle.biz: you should to use headless chrome")
+	}
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -42,7 +41,7 @@ func (b *BioStyle) GetProduct(ctx context.Context, barcode string) (p *product.P
 		return nil, err
 	}
 
-	body, err := httpUtils.GetByChromedp(ctx, b.chromeDPWSAddress, url)
+	body, err := httpUtils.GetByChromedp(ctx, chromeDPWSAddress.(string), url)
 	if err != nil {
 		return nil, err
 	}
