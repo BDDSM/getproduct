@@ -25,6 +25,7 @@ func TestProduct(t *testing.T) {
 	p.SetUnit(unit)
 	p.SetArticle(article)
 	p.SetWeight(0.4)
+	p.AddProperty("test_property", "test_value")
 
 	b, err := json.Marshal(p)
 	if err != nil {

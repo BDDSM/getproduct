@@ -8,10 +8,10 @@ import (
 
 func TestBioStyle(t *testing.T) {
 
-	const barcode_karsulen = "4612732330056"
-	const karsulen_name = "Карсулен флакон, 100 мл"
-	const barcode_ksila = "4742496000381"
-	const ksila_name = "Ксила флак. 50 мл."
+	const barcode_karsulen = "4742496003740"
+	const karsulen_name = "Лимоксин-25 аэрозоль флак. 200 мл."
+	// const barcode_ksila = "4742496000381"
+	// const ksila_name = "Ксила флак. 50 мл."
 	const barcode_fake = "fake"
 
 	ctx := context.WithValue(context.Background(), "chromedpwsaddress", "ws://localhost:3000")
@@ -19,28 +19,15 @@ func TestBioStyle(t *testing.T) {
 	bl := &BioStyle{}
 	pr, err := bl.GetProduct(ctx, barcode_karsulen)
 	if err != nil {
-		t.Fatal(err)
+		t.Error(err)
 	}
 
 	if pr == nil {
 		t.Errorf("func GetProduct(%s) returned nil", barcode_karsulen)
 	}
 
-	if pr.Name() != karsulen_name {
+	if pr != nil && pr.Name() != karsulen_name {
 		t.Errorf("name should %s, have %s", karsulen_name, pr.Name())
-	}
-
-	pr, err = bl.GetProduct(ctx, barcode_ksila)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if pr == nil {
-		t.Errorf("func GetProduct(%s) returned nil", barcode_ksila)
-	}
-
-	if pr.Name() != ksila_name {
-		t.Errorf("name should %s, have %s", ksila_name, pr.Name())
 	}
 
 	errorTextShould := "biostyle.biz: product with barcode fake not found by google"

@@ -106,6 +106,7 @@ func (m *MongoDB) addProduct(ctx context.Context, p *product.Product, colName st
 		"picture":      p.Picture(),
 		"unit":         p.Unit(),
 		"weight":       p.Weight(),
+		"properties":   p.Properties(),
 	}
 
 	collection := client.Database(dbName).Collection(colName)
@@ -162,6 +163,12 @@ func (m *MongoDB) getProduct(ctx context.Context, barcode string, colName string
 
 	if mongoObj["picture"] != nil {
 		p.SetPicture(mongoObj["picture"].(primitive.Binary).Data)
+	}
+
+	if mongoObj["properties"] != nil {
+		for k, v := range mongoObj["properties"].(map[string]interface{}) {
+			p.AddProperty(k, v.(string))
+		}
 	}
 
 	return p, nil

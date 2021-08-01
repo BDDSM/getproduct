@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"strings"
+	"sync"
 )
 
 // Product model
@@ -30,13 +31,18 @@ type Product struct {
 	url string
 	// Picture of product
 	picture []byte
+	// Additional properties
+	properties   map[string]string
+	propertiesMu *sync.Mutex
 }
 
 func New(barcode string, url string) *Product {
 
 	p := Product{
-		barcode: barcode,
-		url:     url,
+		barcode:      barcode,
+		url:          url,
+		properties:   make(map[string]string),
+		propertiesMu: &sync.Mutex{},
 	}
 
 	return &p
@@ -107,6 +113,24 @@ func (p *Product) SetPicture(picture []byte) {
 	p.picture = picture
 }
 
+func (p *Product) Properties() map[string]string {
+	return p.properties
+}
+
+func (p *Product) AddProperty(name, value string) {
+
+	key := strings.TrimSpace(strings.ToLower(name))
+	if len(key) == 0 {
+		return
+	}
+
+	p.propertiesMu.Lock()
+	defer p.propertiesMu.Unlock()
+
+	p.properties[key] = value
+
+}
+
 func (p *Product) MarshalJSON() ([]byte, error) {
 
 	prodMap := make(map[string]interface{})
@@ -123,12 +147,15 @@ func (p *Product) MarshalJSON() ([]byte, error) {
 	} else {
 		prodMap["picture"] = base64.StdEncoding.EncodeToString(p.picture)
 	}
+	prodMap["properties"] = p.properties
 
 	return json.Marshal(prodMap)
 
 }
 
 func (p *Product) UnmarshalJSON(b []byte) error {
+
+	p.properties = make(map[string]string)
 
 	prodMap := make(map[string]interface{})
 	err := json.Unmarshal(b, &prodMap)
@@ -150,6 +177,9 @@ func (p *Product) UnmarshalJSON(b []byte) error {
 		} else {
 			log.Println(err)
 		}
+	}
+	for k, v := range prodMap["properties"].(map[string]interface{}) {
+		p.properties[k] = v.(string)
 	}
 
 	return nil

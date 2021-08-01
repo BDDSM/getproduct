@@ -15,6 +15,11 @@ import (
 	"github.com/korableg/getproduct/pkg/product/provider"
 )
 
+const unitPropName = "базовая единица"
+const structurePropName = "состав"
+const volumePropName = "объем"
+const weightPropName = "вес нетто"
+
 type NationalCatalog struct{}
 
 func init() {
@@ -64,6 +69,8 @@ func (nc *NationalCatalog) GetProduct(ctx context.Context, barcode string) (p *p
 	p.SetManufacturer(nc.getManufacturer(doc))
 	p.SetPicture(nc.getPicture(ctx, doc))
 
+	nc.fillAdditionProperties(doc, p)
+
 	return p, nil
 
 }
@@ -83,14 +90,14 @@ func (nc *NationalCatalog) getName(doc *goquery.Document) (name string) {
 
 func (nc *NationalCatalog) getUnit(doc *goquery.Document) (unit string) {
 
-	unit = nc.getPropertyFromTable(doc, "базовая единица")
+	unit = nc.getPropertyFromTable(doc, unitPropName)
 
 	return unit
 }
 
 func (nc *NationalCatalog) getDescription(doc *goquery.Document) (description string) {
 
-	description = nc.getPropertyFromTable(doc, "состав")
+	description = nc.getPropertyFromTable(doc, structurePropName)
 
 	return description
 }
@@ -120,9 +127,9 @@ func (nc *NationalCatalog) getManufacturer(doc *goquery.Document) (manufacturer 
 
 func (nc *NationalCatalog) getWeight(doc *goquery.Document) (weight float64) {
 
-	weightRaw := nc.getPropertyFromTable(doc, "заявленный объём")
+	weightRaw := nc.getPropertyFromTable(doc, volumePropName)
 	if weightRaw == "" {
-		weightRaw = nc.getPropertyFromTable(doc, "вес нетто")
+		weightRaw = nc.getPropertyFromTable(doc, weightPropName)
 	}
 
 	if weightRaw == "" {
@@ -190,6 +197,34 @@ func (nc *NationalCatalog) getPropertyFromTable(doc *goquery.Document, key strin
 	value = strings.TrimSpace(value)
 
 	return value
+
+}
+
+func (nc *NationalCatalog) fillAdditionProperties(doc *goquery.Document, p *product.Product) {
+
+	doc.Find("table.table th").EachWithBreak(func(parentIndex int, s *goquery.Selection) bool {
+
+		sText := strings.TrimSpace(s.Text())
+		sText = strings.ToLower(sText)
+
+		if !(strings.HasPrefix(sText, unitPropName) ||
+			strings.HasPrefix(sText, structurePropName) ||
+			strings.HasPrefix(sText, volumePropName) ||
+			strings.HasPrefix(sText, weightPropName)) {
+
+			if s.Nodes != nil && len(s.Nodes) > 0 {
+				node := s.Nodes[0]
+				for i := 0; i < 5 && node.NextSibling != nil && node.Data != "td"; i++ {
+					node = node.NextSibling
+				}
+				if node.Data == "td" && node.FirstChild != nil {
+					value := strings.TrimSpace(node.FirstChild.Data)
+					p.AddProperty(sText, value)
+				}
+			}
+		}
+		return true
+	})
 
 }
 

@@ -17,6 +17,9 @@ import (
 	"github.com/korableg/getproduct/pkg/product/provider"
 )
 
+const weightPropName = "вес"
+const unitPropName = "базовая единица"
+
 type BioStyle struct{}
 
 func init() {
@@ -66,6 +69,8 @@ func (b *BioStyle) GetProduct(ctx context.Context, barcode string) (p *product.P
 	p.SetWeight(b.getWeight(doc))
 	p.SetPicture(b.getPicture(ctx, doc))
 
+	b.fillAdditionProperties(doc, p)
+
 	return p, nil
 
 }
@@ -109,14 +114,14 @@ func (b *BioStyle) getManufacturer(doc *goquery.Document) (manufacturer string) 
 
 func (b *BioStyle) getUnit(doc *goquery.Document) (unit string) {
 
-	unit = b.getAdditionalProperty(doc, "базовая единица")
+	unit = b.getAdditionalProperty(doc, unitPropName)
 
 	return unit
 }
 
 func (b *BioStyle) getWeight(doc *goquery.Document) (weight float64) {
 
-	weightRaw := b.getAdditionalProperty(doc, "вес")
+	weightRaw := b.getAdditionalProperty(doc, weightPropName)
 	weight, err := strconv.ParseFloat(weightRaw, 64)
 	if err != nil {
 		log.Println(err)
@@ -177,5 +182,37 @@ func (b *BioStyle) getAdditionalProperty(doc *goquery.Document, key string) (val
 	value = strings.TrimSpace(value)
 
 	return value
+
+}
+
+func (b *BioStyle) fillAdditionProperties(doc *goquery.Document, p *product.Product) {
+
+	doc.Find("tr[itemprop=\"additionalProperty\"]").EachWithBreak(func(parentIndex int, s *goquery.Selection) bool {
+
+		var propertyName, propertyValue string
+
+		skip := false
+
+		s.Find("span[itemprop=\"name\"]").EachWithBreak(func(parentIndex int, sInternal *goquery.Selection) bool {
+			propertyName = strings.ToLower(sInternal.Text())
+			if strings.HasPrefix(propertyName, weightPropName) ||
+				strings.HasPrefix(propertyName, unitPropName) ||
+				strings.HasPrefix(propertyName, "штрихкод") {
+				skip = true
+			}
+			return false
+		})
+
+		if !skip {
+			s.Find("span[itemprop=\"value\"]").EachWithBreak(func(parentIndex int, sInternal *goquery.Selection) bool {
+				propertyValue = strings.TrimSpace(sInternal.Text())
+				p.AddProperty(propertyName, propertyValue)
+				return false
+			})
+		}
+
+		return true
+
+	})
 
 }
